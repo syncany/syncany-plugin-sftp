@@ -1,12 +1,12 @@
 Syncany SFTP Plugin
 
-#1 Steps to make it work
+```
+git clone git@github.com:syncany/syncany-plugin-sftp.git
+cd syncany-plugin-sftp
+gradle eclipse
 
-	git clone http://github.com/vwiencek/syncany-plugin-sftp.git
-	cd syncany-plugin-hazelcast
-	git submodule init
-	git submodule update
-	gradle eclipse
-	
-Then you have a fully 'eclipse-prepared' environment to start improving the plugin
+BUILD JAR:
+./gradlew jar?
+./gradlew uberjar?
+```	
 	
