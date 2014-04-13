@@ -15,7 +15,6 @@ project.ext {
 	applicationVersionFull = "${applicationVersion}${applicationVersionSnapshot}"
 }
 
-
 dependencies {
 	compile		project(':syncany')
 	compile		project(':syncany-lib')
@@ -29,4 +28,14 @@ dependencies {
 
 repositories {
 	mavenCentral()
+}
+
+task uberjar(type: Jar) {
+	from files(sourceSets.main.output.classesDir)
+	from files(sourceSets.main.output.resourcesDir)
+	from {configurations.compile.collect {zipTree(it)}}
+	 
+	manifest {
+		attributes 'Main-Class': 'org.traffic.reporter.TrafficReporter'
+	}
 }
