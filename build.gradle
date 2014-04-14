@@ -1,4 +1,6 @@
 evaluationDependsOn(':syncany')
+evaluationDependsOn(':syncany-lib')
+
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
@@ -35,7 +37,7 @@ repositories {
 	mavenCentral()
 }
 
-task pluginJar(type: Jar) {
+task pluginJar(type: Jar, dependsOn: compileJava) {
 	from files(sourceSets.main.output.classesDir)
 	from files(sourceSets.main.output.resourcesDir)
 	from { configurations.pluginjar.collect { zipTree(it) } }
