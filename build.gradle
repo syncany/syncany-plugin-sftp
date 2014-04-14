@@ -1,18 +1,14 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
-apply plugin: 'application'
 
-mainClassName = 'fsdf'
+configurations {
+	pluginjar
+}
 
 project.ext {
-	applicationVersion = "0.1.1-alpha"
-
-	applicationRelease = false
-	applicationDate = new Date()
-	applicationRevision = "fsdffsd"
-	
-	applicationVersionSnapshot = (!applicationRelease) ? "-SNAPSHOT+${applicationDate.format('yyMMddHHmm')}git${applicationRevision}" : ""
-	applicationVersionFull = "${applicationVersion}${applicationVersionSnapshot}"
+	pluginId = "sftp"
+	pluginName = "SFTP"
+	pluginVersion = "0.1.0"
 }
 
 dependencies {
@@ -21,21 +17,36 @@ dependencies {
 	compile		"com.jcraft:jsch:0.1.50"
 	compile		"org.apache.sshd:sshd-core:0.9.0"
 	compile		"org.apache.commons:commons-vfs2:2.0"
-	
+
+	pluginjar	"com.jcraft:jsch:0.1.50"
+	pluginjar	"org.apache.sshd:sshd-core:0.9.0"
+	pluginjar	"org.apache.commons:commons-vfs2:2.0"
+		
 	testCompile	"junit:junit:4.3"
-	testCompile	project(path : ':syncany-lib', configuration: 'tests')
+	testCompile	project(path: ':syncany-lib', configuration: 'tests')
 }
 
 repositories {
 	mavenCentral()
 }
 
-task uberjar(type: Jar) {
+task pluginProjectExt(type: Task) {
+	// Copies the 'core' project properties (project.ext)
+	// to this plugin's properties
+	
+	doLast {
+		project(':syncany').ext.properties.each {
+			project.ext[it.key] = it.value
+		}
+		
+	}
+}
+
+task pluginJar(type: Jar, dependsOn: pluginProjectExt) {
 	from files(sourceSets.main.output.classesDir)
 	from files(sourceSets.main.output.resourcesDir)
-	from {configurations.compile.collect {zipTree(it)}}
-	 
-	manifest {
-		attributes 'Main-Class': 'org.traffic.reporter.TrafficReporter'
-	}
+	from { configurations.pluginjar.collect { zipTree(it) } }
+
+	baseName = "syncany-plugin-${pluginId}"
+	version  = "${pluginVersion}" // Should be: "${pluginVersion}${applicationVersionSnapshot}"						
 }
