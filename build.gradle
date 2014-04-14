@@ -1,6 +1,4 @@
 evaluationDependsOn(':syncany')
-evaluationDependsOn(':syncany-lib')
-
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
