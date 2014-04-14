@@ -1,3 +1,5 @@
+evaluationDependsOn(':syncany')
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
@@ -8,7 +10,10 @@ configurations {
 project.ext {
 	pluginId = "sftp"
 	pluginName = "SFTP"
-	pluginVersion = "0.1.0"
+	pluginVersion = "0.1.0"	
+	
+	pluginVersionSnapshot = project(':syncany').ext.applicationVersionSnapshot
+	pluginVersionFull = "${pluginVersion}${pluginVersionSnapshot}"	
 }
 
 dependencies {
@@ -30,23 +35,11 @@ repositories {
 	mavenCentral()
 }
 
-task pluginProjectExt(type: Task) {
-	// Copies the 'core' project properties (project.ext)
-	// to this plugin's properties
-	
-	doLast {
-		project(':syncany').ext.properties.each {
-			project.ext[it.key] = it.value
-		}
-		
-	}
-}
-
-task pluginJar(type: Jar, dependsOn: pluginProjectExt) {
+task pluginJar(type: Jar) {
 	from files(sourceSets.main.output.classesDir)
 	from files(sourceSets.main.output.resourcesDir)
 	from { configurations.pluginjar.collect { zipTree(it) } }
 
 	baseName = "syncany-plugin-${pluginId}"
-	version  = "${pluginVersion}" // Should be: "${pluginVersion}${applicationVersionSnapshot}"						
+	version  = "${pluginVersionFull}"						
 }
