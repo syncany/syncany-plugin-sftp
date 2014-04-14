@@ -55,6 +55,9 @@ import org.syncany.operations.init.InitOperation;
 import org.syncany.operations.init.InitOperationListener;
 import org.syncany.operations.init.InitOperationOptions;
 import org.syncany.operations.init.InitOperationResult;
+import org.syncany.operations.plugin.PluginOperation;
+import org.syncany.operations.plugin.PluginOperationOptions;
+import org.syncany.operations.plugin.PluginOperationResult;
 import org.syncany.operations.up.UpOperation;
 import org.syncany.operations.up.UpOperationListener;
 import org.syncany.operations.up.UpOperationOptions;
@@ -200,5 +203,9 @@ public class Client {
 
 	public CleanupOperationResult cleanup(CleanupOperationOptions options) throws Exception {
 		return new CleanupOperation(config, options).execute();
+	}
+
+	public PluginOperationResult plugin(PluginOperationOptions options) throws Exception {
+		return new PluginOperation(config, options).execute();
 	}
 }
