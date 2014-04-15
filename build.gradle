@@ -9,8 +9,8 @@ configurations {
 
 project.ext {
 	pluginId = "sftp"
-	pluginName = "SFTP"
-	pluginVersion = "0.1.0"	
+	pluginName = "SFTP TEST"
+	pluginVersion = "0.1.0-TEST"	
 	
 	pluginVersionSnapshot = project(':syncany').ext.applicationVersionSnapshot
 	pluginVersionFull = "${pluginVersion}${pluginVersionSnapshot}"	
@@ -35,7 +35,14 @@ repositories {
 	mavenCentral()
 }
 
-task pluginJar(type: Jar, dependsOn: compileJava) {
+processResources {	
+	filter{ String line -> line.replaceAll('%pluginId%', "${pluginId}") }        	            
+	filter{ String line -> line.replaceAll('%pluginName%', "${pluginName}") }        	            
+	filter{ String line -> line.replaceAll('%pluginVersion%', "${pluginVersionFull}") }      	            
+}		
+
+
+task pluginJar(type: Jar, dependsOn: [processResources, compileJava]) {
 	from files(sourceSets.main.output.classesDir)
 	from files(sourceSets.main.output.resourcesDir)
 	from { configurations.pluginjar.collect { zipTree(it) } }
