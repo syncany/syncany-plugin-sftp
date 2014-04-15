@@ -11,6 +11,7 @@ project.ext {
 	pluginId = "sftp"
 	pluginName = "SFTP"
 	pluginVersion = "0.1.0"	
+	pluginDate = new Date()
 	
 	pluginVersionSnapshot = project(':syncany').ext.applicationVersionSnapshot
 	pluginVersionFull = "${pluginVersion}${pluginVersionSnapshot}"	
@@ -39,8 +40,8 @@ processResources {
 	filter{ String line -> line.replaceAll('%pluginId%', "${pluginId}") }        	            
 	filter{ String line -> line.replaceAll('%pluginName%', "${pluginName}") }        	            
 	filter{ String line -> line.replaceAll('%pluginVersion%', "${pluginVersionFull}") }      	            
+	filter{ String line -> line.replaceAll('%pluginDate%', "${pluginDate}") }    	
 }		
-
 
 task pluginJar(type: Jar, dependsOn: [processResources, compileJava]) {
 	from files(sourceSets.main.output.classesDir)
@@ -48,5 +49,12 @@ task pluginJar(type: Jar, dependsOn: [processResources, compileJava]) {
 	from { configurations.pluginjar.collect { zipTree(it) } }
 
 	baseName = "syncany-plugin-${pluginId}"
-	version  = "${pluginVersionFull}"						
+	version  = "${pluginVersionFull}"
+	
+	manifest {
+		attributes("Plugin-Id": "${pluginId}")
+		attributes("Plugin-Name": "${pluginName}")
+		attributes("Plugin-Version": "${pluginVersionFull}")
+		attributes("Plugin-Date": "${pluginDate}")		
+	}						
 }
