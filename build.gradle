@@ -9,8 +9,8 @@ configurations {
 
 project.ext {
 	pluginId = "sftp"
-	pluginName = "SFTP TEST"
-	pluginVersion = "0.1.0-TEST"	
+	pluginName = "SFTP"
+	pluginVersion = "0.1.0"	
 	
 	pluginVersionSnapshot = project(':syncany').ext.applicationVersionSnapshot
 	pluginVersionFull = "${pluginVersion}${pluginVersionSnapshot}"	
