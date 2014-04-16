@@ -12,6 +12,8 @@ project.ext {
 	pluginName = "SFTP"
 	pluginVersion = "0.1.0"	
 	pluginDate = new Date()
+	pluginAppMinVersion = "0.1.2-alpha"
+	pluginRelease = project(':syncany').ext.applicationRelease
 	
 	pluginVersionSnapshot = project(':syncany').ext.applicationVersionSnapshot
 	pluginVersionFull = "${pluginVersion}${pluginVersionSnapshot}"	
@@ -41,6 +43,8 @@ processResources {
 	filter{ String line -> line.replaceAll('%pluginName%', "${pluginName}") }        	            
 	filter{ String line -> line.replaceAll('%pluginVersion%', "${pluginVersionFull}") }      	            
 	filter{ String line -> line.replaceAll('%pluginDate%', "${pluginDate}") }    	
+	filter{ String line -> line.replaceAll('%pluginAppMinVersion%', "${pluginAppMinVersion}") }    	
+	filter{ String line -> line.replaceAll('%pluginRelease%', "${pluginRelease}") }    	
 }		
 
 task pluginJar(type: Jar, dependsOn: [processResources, compileJava]) {
@@ -56,5 +60,7 @@ task pluginJar(type: Jar, dependsOn: [processResources, compileJava]) {
 		attributes("Plugin-Name": "${pluginName}")
 		attributes("Plugin-Version": "${pluginVersionFull}")
 		attributes("Plugin-Date": "${pluginDate}")		
+		attributes("Plugin-App-Min-Version": "${pluginAppMinVersion}")		
+		attributes("Plugin-Release": "${pluginRelease}")		
 	}						
 }
