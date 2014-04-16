@@ -23,8 +23,8 @@ before_install:
 - lftp -v
 
 script:
-- ./gradlew pluginJar
+- core/gradlew pluginJar
 
 after_success:
-- ./core/gradle/lftp/lftpuploadplugin.sh
+- core/gradle/lftp/lftpuploadplugin.sh
 
