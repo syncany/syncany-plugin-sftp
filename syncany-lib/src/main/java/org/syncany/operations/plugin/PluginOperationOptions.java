@@ -28,9 +28,10 @@ public class PluginOperationOptions implements OperationOptions {
 		ALL, LOCAL, REMOTE
 	}
 	
-	private PluginAction action;
-	private String pluginId;
-	private PluginListMode listMode;
+	private PluginAction action = null;
+	private String pluginId = null;
+	private PluginListMode listMode = PluginListMode.ALL;
+	private boolean snapshots = false;
 
 	public PluginAction getAction() {
 		return action;
@@ -54,5 +55,13 @@ public class PluginOperationOptions implements OperationOptions {
 
 	public void setListMode(PluginListMode listMode) {
 		this.listMode = listMode;
+	}
+
+	public boolean isSnapshots() {
+		return snapshots;
+	}
+
+	public void setSnapshots(boolean snapshots) {
+		this.snapshots = snapshots;
 	}
 }
