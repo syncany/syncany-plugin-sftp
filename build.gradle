@@ -10,7 +10,7 @@ configurations {
 project.ext {
 	pluginId = "sftp"
 	pluginName = "SFTP"
-	pluginVersion = "0.1.0"	
+	pluginVersion = "0.1.0-alpha"	
 	pluginDate = new Date()
 	pluginAppMinVersion = "0.1.2-alpha"
 	pluginRelease = project(':syncany').ext.applicationRelease
@@ -20,7 +20,6 @@ project.ext {
 }
 
 dependencies {
-	compile		project(':syncany')
 	compile		project(':syncany-lib')
 	compile		"com.jcraft:jsch:0.1.50"
 	compile		"org.apache.sshd:sshd-core:0.9.0"
