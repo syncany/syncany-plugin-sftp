@@ -350,7 +350,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	}
 
 	@Override
-	public boolean testTargetExists() throws StorageException {
+	public boolean testTargetExists() {
 		try {
 			SftpATTRS attrs = channel.stat(repoPath);
 		    boolean targetExists = attrs.isDir();
@@ -371,13 +371,11 @@ public class SftpTransferManager extends AbstractTransferManager {
 	}
 
 	@Override
-	public boolean testTargetCanCreate() throws StorageException {
+	public boolean testTargetCanCreate() {
 		// Find parent path
 		String repoPathNoSlash = FileUtil.removeTrailingSlash(repoPath);
 		int repoPathLastSlash = repoPathNoSlash.lastIndexOf("/");
 		String parentPath = (repoPathLastSlash > 0) ? repoPathNoSlash.substring(0, repoPathLastSlash) : "/";
-		
-		System.out.println(parentPath);
 		
 		// Test parent path permissions
 		try {
