@@ -25,14 +25,23 @@ mainClassName = "org.syncany.Syncany"
 
 startScripts {
 	defaultJvmOpts = [ "-Xmx1024m", "-Dfile.encoding=utf-8" ]
-	classpath = files('$APP_HOME/lib/*')
 	
 	doLast {
 		def winFile = file getWindowsScript()
 		def unixFile = file getUnixScript()
 
-		winFile.text = winFile.text.replaceAll("(set CLASSPATH=.+)", '$1;%AppData%\\\\syncany\\\\plugins\\\\*')
-		unixFile.text = unixFile.text.replaceAll("(CLASSPATH=\\\$APP_HOME.+)", '$1:~/.config/syncany/plugins/*')
+		winFile.text = winFile.text.replaceAll("(set CLASSPATH=.+)", 'set CLASSPATH=%APP_HOME%\\\\lib\\\\*;%AppData%\\\\Syncany\\\\plugins\\\\*')
+		unixFile.text = unixFile.text.replaceAll("(CLASSPATH=\\\$APP_HOME.+)", 'CLASSPATH=\\\$APP_HOME/lib/*:~/.config/syncany/plugins/*')
+		
+		// Post Java process commands: Delayed plugin JAR file deletion (Windows only)
+		String winPurgeFileDeletionCommands = "@rem Delete plugin JARs\r\n"
+		winPurgeFileDeletionCommands += "SET PURGEFILE=%AppData%\\\\Syncany\\\\purgefile\r\n";
+		winPurgeFileDeletionCommands += "if exist %PURGEFILE% (\r\n";
+		winPurgeFileDeletionCommands += "  @for /f %%b in (%PURGEFILE%) do del /q \"%%b\" 2>NUL\r\n";
+		winPurgeFileDeletionCommands += "  del /q %PURGEFILE% 2>NUL\r\n";
+		winPurgeFileDeletionCommands += ")\r\n\r\n";
+		
+		winFile.text = winFile.text.replaceAll("(:end)", "${winPurgeFileDeletionCommands}:end")
 	}
 }
 
