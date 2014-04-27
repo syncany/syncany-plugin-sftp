@@ -36,6 +36,7 @@ import org.syncany.connection.plugins.AbstractTransferManager;
 import org.syncany.connection.plugins.DatabaseRemoteFile;
 import org.syncany.connection.plugins.MultiChunkRemoteFile;
 import org.syncany.connection.plugins.RemoteFile;
+import org.syncany.connection.plugins.RepoRemoteFile;
 import org.syncany.connection.plugins.StorageException;
 import org.syncany.connection.plugins.TransferManager;
 import org.syncany.util.FileUtil;
@@ -107,20 +108,23 @@ public class SftpTransferManager extends AbstractTransferManager {
 				}
 				
 				Properties properties = new Properties();
-				properties.put("StrictHostKeyChecking", "no");
+				properties.put("StrictHostKeyChecking", "no"); // TODO [high] This should be enabled!
 				session = jsch.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
 				session.setConfig(properties);
 				session.setPassword(getConnection().getPassword());
 				session.connect();
+				
 				if (!session.isConnected()){
 					logger.warning("SFTP: unable to connect to sftp host " + getConnection().getHostname() + ":" + getConnection().getPort());
 				}
 
 				channel = (ChannelSftp)session.openChannel("sftp");
 				channel.connect();
+				
 				if (!channel.isConnected()){
 					logger.warning("SFTP: unable to connect to sftp channel " + getConnection().getHostname() + ":" + getConnection().getPort());
 				}
+				
 				return;
 			}
 			catch (Exception ex) {
@@ -141,6 +145,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			channel.quit();
 			channel.disconnect();
 		}
+		
 		if (session != null){
 			session.disconnect();
 		}
@@ -151,9 +156,10 @@ public class SftpTransferManager extends AbstractTransferManager {
 		connect();
 
 		try {
-			if (!repoExists() && createIfRequired) {
+			if (!testTargetExists() && createIfRequired) {
 				channel.mkdir(repoPath);
 			}
+			
 			channel.mkdir(multichunkPath);
 			channel.mkdir(databasePath);
 		}
@@ -301,51 +307,118 @@ public class SftpTransferManager extends AbstractTransferManager {
 	
 	private List<LsEntry> listEntries(String absolutePath) throws SftpException{
 		final List<LsEntry> result = new ArrayList<>();
-		LsEntrySelector selector = new LsEntrySelector(){
-	       public int select(LsEntry entry){
-	    	   if (!entry.getFilename().equals(".") && !entry.getFilename().equals("..")){
-	    		   result.add(entry);
-	    	   }
-	    	   return CONTINUE;
-	       }
-	     };
+		LsEntrySelector selector = new LsEntrySelector() {
+			public int select(LsEntry entry) {
+				if (!entry.getFilename().equals(".")
+						&& !entry.getFilename().equals("..")) {
+					result.add(entry);
+				}
+				return CONTINUE;
+			}
+		};
+
 		channel.ls(absolutePath, selector);
 		return result;
 	}
-	
+
 	@Override
-	public boolean repoExists() throws StorageException {
+	public boolean testTargetCanWrite() {
+		try {
+			SftpATTRS stat = channel.stat(repoPath);
+			
+			if (stat.isDir()) {
+				String tempRemoteFile = repoPath + "/syncany-write-test";
+				File tempFile = File.createTempFile("syncany-write-test", "tmp");
+
+				channel.put(new FileInputStream(tempFile), tempRemoteFile);
+				channel.rm(tempRemoteFile);
+				
+				tempFile.delete();
+				
+				logger.log(Level.INFO, "testTargetCanWrite: Can write, test file created/deleted successfully.");
+				return true;
+			}
+			else {
+				logger.log(Level.INFO, "testTargetCanWrite: Can NOT write, target does not exist.");
+				return false;				
+			}
+		}
+		catch (Exception e) {
+			logger.log(Level.INFO, "testTargetCanWrite: Can NOT write to target.", e);
+			return false;
+		}
+	}
+
+	@Override
+	public boolean testTargetExists() {
 		try {
 			SftpATTRS attrs = channel.stat(repoPath);
-		    return attrs.isDir();
+		    boolean targetExists = attrs.isDir();
+		    
+		    if (targetExists) {
+		    	logger.log(Level.INFO, "testTargetExists: Target does exist.");
+				return true;
+		    }
+		    else {
+		    	logger.log(Level.INFO, "testTargetExists: Target does NOT exist.");
+				return false;
+		    }
 		} 
 		catch (Exception e) {
+			logger.log(Level.WARNING, "testTargetExists: Target does NOT exist, error occurred.", e);
 		    return false;
 		}
 	}
-	
+
 	@Override
-	public boolean repoIsEmpty() throws StorageException {
+	public boolean testTargetCanCreate() {
+		// Find parent path
+		String repoPathNoSlash = FileUtil.removeTrailingSlash(repoPath);
+		int repoPathLastSlash = repoPathNoSlash.lastIndexOf("/");
+		String parentPath = (repoPathLastSlash > 0) ? repoPathNoSlash.substring(0, repoPathLastSlash) : "/";
+		
+		// Test parent path permissions
 		try {
-			return channel.ls(repoPath).size() == 2; // "." and ".."
+			SftpATTRS parentPathStat = channel.stat(parentPath);
+			
+			boolean statSuccessful = parentPathStat != null;
+			boolean hasWritePermissions = statSuccessful && (parentPathStat.getPermissions() & 00200) != 0;
+			
+			if (hasWritePermissions) {
+				logger.log(Level.INFO, "testTargetCanCreate: Can create target at " + parentPathStat);
+				return true;
+			}
+			else {
+				logger.log(Level.INFO, "testTargetCanCreate: Can NOT create target (statSuccessful = " + statSuccessful 
+						+ ", hasWritePermissions = " + hasWritePermissions + ")");
+				
+				return false;
+			}			
 		}
 		catch (SftpException e) {
-			throw new StorageException(e.getMessage());
+			logger.log(Level.INFO, "testTargetCanCreate: Can NOT create target at " + parentPath, e);
+			return false;
 		}
 	}
-	
+
 	@Override
-	public boolean hasWriteAccess() throws StorageException {
+	public boolean testRepoFileExists() {
 		try {
-			String parentPath = FileUtil.getUnixParentPath(repoPath);
-			SftpATTRS stat = channel.stat(parentPath);
-			return stat != null && ((stat.getPermissions() & 00200) != 0) && stat.getUId() != 0;
-		}
-		catch (SftpException ex) {
-			if (ex.id == 3 /* access denied */ || ex.id == 2 /* file not found */) {
+			String repoFilePath = getRemoteFile(new RepoRemoteFile());
+			SftpATTRS repoFileStat = channel.stat(repoFilePath);
+			
+			if (repoFileStat.isReg()) {
+				logger.log(Level.INFO, "testRepoFileExists: Repo file exists at " + repoFilePath);
+				return true;
+			}
+			else {
+				logger.log(Level.INFO, "testRepoFileExists: Repo file DOES NOT exist at " + repoFilePath);
 				return false;
 			}
-			throw new StorageException(ex.getMessage());
+		}
+		catch (Exception e) {
+			logger.log(Level.INFO, "testRepoFileExists: Exception when trying to check repo file existence.", e);
+			return false;
 		}
 	}
 }

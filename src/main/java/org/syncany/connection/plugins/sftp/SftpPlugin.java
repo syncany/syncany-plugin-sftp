@@ -30,21 +30,8 @@ import org.syncany.connection.plugins.Plugin;
  * @author Vincent Wiencek <vwiencek@gmail.com>
  */
 public class SftpPlugin extends Plugin {
-	public static final String ID = "sftp";
-
-	@Override
-	public String getId() {
-		return ID;
-	}
-
-	@Override
-	public String getName() {
-		return "SFTP";
-	}
-
-	@Override
-	public Integer[] getVersion() {
-		return new Integer[] { 0, 1 };
+	public SftpPlugin() {
+		super("sftp");
 	}
 
 	@Override

@@ -187,13 +187,6 @@ public class SftpConnectionPluginTest {
 		}
 	}	
 	
-	@Test(expected=StorageException.class)
-	public void testDeleteNonExistantFile() throws StorageException {
-		TransferManager transferManager = loadPluginAndCreateTransferManager();		
-		transferManager.connect();	
-		transferManager.delete(new RemoteFile("non-existant-file"));
-	}
-	
 	private Map<String, File> generateTestInputFile() throws IOException {
 		Map<String, File> inputFilesMap = new HashMap<String, File>();
 		List<File> inputFiles = TestFileUtil.createRandomFilesInDirectory(tempLocalSourceDir, 50*1024, 10);
@@ -208,6 +201,8 @@ public class SftpConnectionPluginTest {
 	private Map<File, RemoteFile> uploadChunkFiles(TransferManager transferManager, Collection<File> inputFiles) throws StorageException {
 		Map<File, RemoteFile> inputFileOutputFile = new HashMap<File, RemoteFile>();
 		
+		throw new RuntimeException("Not yet implemented");
+		/*
 		for (File inputFile : inputFiles) {
 			RemoteFile remoteOutputFile = new RemoteFile(inputFile.getName());
 			transferManager.upload(inputFile, remoteOutputFile);
@@ -215,7 +210,7 @@ public class SftpConnectionPluginTest {
 			inputFileOutputFile.put(inputFile, remoteOutputFile);			
 		}
 		
-		return inputFileOutputFile;
+		return inputFileOutputFile;*/
 	}
 	
 	private Map<RemoteFile, File> downloadRemoteFiles(TransferManager transferManager, Collection<RemoteFile> remoteFiles) throws StorageException {
