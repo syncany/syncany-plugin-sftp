@@ -38,11 +38,12 @@ import org.syncany.connection.plugins.PluginOptionSpecs;
 import org.syncany.connection.plugins.Plugins;
 import org.syncany.connection.plugins.StorageException;
 import org.syncany.connection.plugins.StorageTestResult;
+import org.syncany.connection.plugins.UserInteractionListener;
 import org.syncany.operations.init.GenlinkOperationResult;
 import org.syncany.util.StringUtil;
 import org.syncany.util.StringUtil.StringJoinListener;
 
-public abstract class AbstractInitCommand extends Command {
+public abstract class AbstractInitCommand extends Command implements UserInteractionListener {
 	protected InitConsole console;
 	protected boolean isInteractive;	
 
@@ -350,4 +351,23 @@ public abstract class AbstractInitCommand extends Command {
 			out.println("  " + testResult.getException().getMessage());
 		}
 	}
+	
+
+	@Override
+	public boolean onUserConfirm(String subject, String message, String question) {
+		out.println();
+		out.println(subject);
+		out.println("------------------------------");
+		out.println(message);
+		out.println();
+		
+		String yesno = InitConsole.getInstance().readLine(question + " (y/n)? ");
+		
+		if (!yesno.toLowerCase().startsWith("y") && !"".equals(yesno)) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}	
 } 

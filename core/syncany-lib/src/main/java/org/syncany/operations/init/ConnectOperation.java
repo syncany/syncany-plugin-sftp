@@ -20,7 +20,6 @@ package org.syncany.operations.init;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -35,6 +34,7 @@ import org.syncany.config.to.ConfigTO;
 import org.syncany.config.to.ConfigTO.ConnectionTO;
 import org.syncany.config.to.MasterTO;
 import org.syncany.config.to.RepoTO;
+import org.syncany.connection.plugins.Connection;
 import org.syncany.connection.plugins.MasterRemoteFile;
 import org.syncany.connection.plugins.Plugin;
 import org.syncany.connection.plugins.Plugins;
@@ -77,6 +77,8 @@ public class ConnectOperation extends AbstractInitOperation {
 	private ConnectOperationOptions options;
 	private ConnectOperationResult result;
 	private ConnectOperationListener listener;
+	
+	private Plugin plugin;
     private TransferManager transferManager;
 	
 	public ConnectOperation(ConnectOperationOptions options, ConnectOperationListener listener) {
@@ -88,7 +90,7 @@ public class ConnectOperation extends AbstractInitOperation {
 	}		
 	
 	@Override
-	public ConnectOperationResult execute() throws IOException, StorageException, CipherException {
+	public ConnectOperationResult execute() throws Exception {
 		logger.log(Level.INFO, "");
 		logger.log(Level.INFO, "Running 'Connect'");
 		logger.log(Level.INFO, "--------------------------------------------");
@@ -103,8 +105,15 @@ public class ConnectOperation extends AbstractInitOperation {
 			return new ConnectOperationResult(ConnectResultCode.NOK_DECRYPT_ERROR);
 		}
 
-		// Create valid transfer manager
-		transferManager = createTransferManager(configTO.getConnectionTO());
+		// Init plugin and transfer manager
+		plugin = Plugins.get(options.getConfigTO().getConnectionTO().getType());
+		
+		Connection connection = plugin.createConnection();
+		
+		connection.init(options.getConfigTO().getConnectionTO().getSettings());
+		connection.setUserInteractionListener(listener);
+
+		transferManager = plugin.createTransferManager(connection);
 		
 		// Test the repo
 		if (!performRepoTest(transferManager)) {
@@ -178,6 +187,9 @@ public class ConnectOperation extends AbstractInitOperation {
 			writeXmlFile(new MasterTO(configTO.getMasterKey().getSalt()), masterFile);
 		}
 				
+		// Shutdown plugin
+		transferManager.disconnect();
+		
 		return new ConnectOperationResult(ConnectResultCode.OK);
 	}		
 
