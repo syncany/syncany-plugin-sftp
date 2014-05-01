@@ -120,7 +120,7 @@ public class SftpConnectionPluginTest {
 		Connection connection = pluginInfo.createConnection();
 		connection.init(invalidPluginSettings);
 		
-		TransferManager transferManager = connection.createTransferManager();
+		TransferManager transferManager = pluginInfo.createTransferManager(connection);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();	
@@ -136,7 +136,7 @@ public class SftpConnectionPluginTest {
 		Connection connection = pluginInfo.createConnection();
 		connection.init(invalidPluginSettings);
 		
-		TransferManager transferManager = connection.createTransferManager();
+		TransferManager transferManager = pluginInfo.createTransferManager(connection);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();		
@@ -234,7 +234,7 @@ public class SftpConnectionPluginTest {
 		Connection connection = pluginInfo.createConnection();				
 		connection.init(sshPluginSettings);
 		
-		TransferManager transferManager = connection.createTransferManager();
+		TransferManager transferManager = pluginInfo.createTransferManager(connection);
 
 		assertEquals("SftpPlugin expected.", SftpPlugin.class, pluginInfo.getClass());
 		assertEquals("SftpConnection expected.", SftpConnection.class, connection.getClass());

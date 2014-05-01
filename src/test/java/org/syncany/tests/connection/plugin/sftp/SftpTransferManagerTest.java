@@ -43,7 +43,7 @@ public class SftpTransferManagerTest {
 		Assert.assertEquals(StorageTestResult.REPO_EXISTS, test(SANDBOX + "notEmptyRepo"));
 		*/
 	}
-		
+		/*
 	public StorageTestResult test(String host, String path) throws StorageException{
 		SftpConnection cnx = con(host);
 		cnx.setPath(path);
@@ -68,4 +68,5 @@ public class SftpTransferManagerTest {
 		connection.setPassword(PASSWORD);
 		return connection;
 	}
+	*/
 }

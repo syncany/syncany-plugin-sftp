@@ -24,7 +24,6 @@ import org.syncany.connection.plugins.PluginOptionSpec;
 import org.syncany.connection.plugins.PluginOptionSpec.ValueType;
 import org.syncany.connection.plugins.PluginOptionSpecs;
 import org.syncany.connection.plugins.StorageException;
-import org.syncany.connection.plugins.TransferManager;
 
 /**
  * The SFTP connection represents the settings required to connect to an
@@ -33,17 +32,12 @@ import org.syncany.connection.plugins.TransferManager;
  *
  * @author Vincent Wiencek <vwiencek@gmail.com>
  */
-public class SftpConnection implements Connection {
+public class SftpConnection extends Connection {
     private String hostname;
     private String username;
     private String password;
     private String path;
     private int port;
-
-    @Override
-    public TransferManager createTransferManager() {
-        return new SftpTransferManager(this);
-    }
   
     public String getHostname() {
         return hostname;

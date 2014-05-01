@@ -19,6 +19,7 @@ package org.syncany.connection.plugins.sftp;
 
 import org.syncany.connection.plugins.Connection;
 import org.syncany.connection.plugins.Plugin;
+import org.syncany.connection.plugins.TransferManager;
 
 /**
  * Identifies the SFTP-based storage {@link Plugin} for Syncany. 
@@ -34,6 +35,11 @@ public class SftpPlugin extends Plugin {
 		super("sftp");
 	}
 
+    @Override
+    public TransferManager createTransferManager(Connection connection) {
+        return new SftpTransferManager((SftpConnection) connection);
+    }
+    
 	@Override
 	public Connection createConnection() {
 		return new SftpConnection();
