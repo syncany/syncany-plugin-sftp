@@ -441,8 +441,6 @@ public class SftpTransferManager extends AbstractTransferManager {
 	
 	private class SftpUserInfo implements UserInfo {
 		private UserInteractionListener userInteractionListener;
-		private String password;
-		private String passphrase;
 		
 		public SftpUserInfo() {			
 			this.userInteractionListener = getConnection().getUserInteractionListener();
@@ -450,29 +448,29 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 		@Override
 		public String getPassphrase() {
-			return passphrase;
+			return null; // Not supported
 		}
 
 		@Override
 		public String getPassword() {
-			return password;
+			return null; // Not supported
 		}
 
 		@Override
-		public boolean promptPassword(String message) {
-			this.password = userInteractionListener.onUserPassword(message);
-			return true;
+		public boolean promptPassword(String message) {			
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Wrong SSH/SFTP password? This is NOT SUPPORTED right now.");
+			return false; // Do NOT let JSch ask for new password (if given password is wrong)
 		}
 
 		@Override
 		public boolean promptPassphrase(String message) {
-			this.passphrase = userInteractionListener.onUserPassword(message);
-			return true;
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. This is NOT SUPPORTED right now.");
+			return false; // Do NOT let JSch ask for passphrase
 		}
 
 		@Override
 		public boolean promptYesNo(String message) {
-			return userInteractionListener.onUserConfirm("Confirm", message, "Confirm [y/n]?");
+			return userInteractionListener.onUserConfirm("SSH/SFTP Confirmation", message, "Confirm");
 		}
 
 		@Override
