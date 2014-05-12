@@ -32,13 +32,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.syncany.config.UserConfig;
 import org.syncany.connection.plugins.AbstractTransferManager;
+import org.syncany.connection.plugins.ActionRemoteFile;
 import org.syncany.connection.plugins.DatabaseRemoteFile;
 import org.syncany.connection.plugins.MultiChunkRemoteFile;
 import org.syncany.connection.plugins.RemoteFile;
 import org.syncany.connection.plugins.RepoRemoteFile;
 import org.syncany.connection.plugins.StorageException;
 import org.syncany.connection.plugins.TransferManager;
+import org.syncany.connection.plugins.UserInteractionListener;
 import org.syncany.util.FileUtil;
 
 import com.jcraft.jsch.ChannelSftp;
@@ -48,6 +51,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.UserInfo;
 
 /**
  * Implements a {@link TransferManager} based on an SFTP storage backend for the
@@ -64,30 +68,33 @@ import com.jcraft.jsch.SftpException;
  * </ul>
  * 
  * <p>All operations are auto-connected, i.e. a connection is automatically
- * established. Connecting is retried a few times before throwing an exception.
+ * established. 
  * 
  * @author Vincent Wiencek <vwiencek@gmail.com>
+ * @author Philipp C. Heckel <philipp.heckel@gmail.com>
  */
 public class SftpTransferManager extends AbstractTransferManager {
 	private static final Logger logger = Logger.getLogger(SftpTransferManager.class.getSimpleName());
 
-	private static final int CONNECT_RETRY_COUNT = 3;
-
-	private JSch jsch;
-	private Session session;
-	private ChannelSftp channel;
+	private JSch secureChannel;
+	private Session secureSession;
+	private ChannelSftp sftpChannel;
 
 	private String repoPath;
-	private String multichunkPath;
-	private String databasePath;
+	private String multichunksPath;
+	private String databasesPath;
+	private String actionsPath;
 
 	public SftpTransferManager(SftpConnection connection) {
 		super(connection);
 
-		this.jsch = new JSch();
+		this.secureChannel = new JSch();
 		this.repoPath = connection.getPath();
-		this.multichunkPath = connection.getPath() + "/multichunks";
-		this.databasePath = connection.getPath() + "/databases";
+		this.multichunksPath = connection.getPath() + "/multichunks";
+		this.databasesPath = connection.getPath() + "/databases";
+		this.actionsPath = connection.getPath() + "/actions";
+		
+		initKnownHosts();		
 	}
 
 	@Override
@@ -97,57 +104,55 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	@Override
 	public void connect() throws StorageException {
-		for (int i = 0; i < CONNECT_RETRY_COUNT; i++) {
-			try {
-				if (session != null && session.isConnected()) {
-					return;
-				}
-
-				if (logger.isLoggable(Level.INFO)) {
-					logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getConnection().getHostname(), getConnection().getPort() });
-				}
-				
-				Properties properties = new Properties();
-				properties.put("StrictHostKeyChecking", "no"); // TODO [high] This should be enabled!
-				session = jsch.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
-				session.setConfig(properties);
-				session.setPassword(getConnection().getPassword());
-				session.connect();
-				
-				if (!session.isConnected()){
-					logger.warning("SFTP: unable to connect to sftp host " + getConnection().getHostname() + ":" + getConnection().getPort());
-				}
-
-				channel = (ChannelSftp)session.openChannel("sftp");
-				channel.connect();
-				
-				if (!channel.isConnected()){
-					logger.warning("SFTP: unable to connect to sftp channel " + getConnection().getHostname() + ":" + getConnection().getPort());
-				}
-				
+		try {
+			if (secureSession != null && secureSession.isConnected()) {
 				return;
 			}
-			catch (Exception ex) {
-				if (i == CONNECT_RETRY_COUNT - 1) {
-					logger.log(Level.WARNING, "SFTP client connection failed. Retrying failed.", ex);
-					throw new StorageException(ex);
-				}
-				else {
-					logger.log(Level.WARNING, "SFTP client connection failed. Retrying " + (i + 1) + "/" + CONNECT_RETRY_COUNT + " ...", ex);
-				}
+
+			if (logger.isLoggable(Level.INFO)) {
+				logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getConnection().getHostname(), getConnection().getPort() });
 			}
+			
+			Properties properties = new Properties();
+			properties.put("StrictHostKeyChecking", "ask"); 
+			
+			secureSession = secureChannel.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
+
+			secureSession.setConfig(properties);
+			secureSession.setPassword(getConnection().getPassword());
+			
+			if (getConnection().getUserInteractionListener() != null) {
+				secureSession.setUserInfo(new SftpUserInfo());
+			}
+			
+			secureSession.connect();
+			
+			if (!secureSession.isConnected()) {
+				logger.warning("SFTP: unable to connect to sftp host " + getConnection().getHostname() + ":" + getConnection().getPort());
+			}
+
+			sftpChannel = (ChannelSftp) secureSession.openChannel("sftp");
+			sftpChannel.connect();
+			
+			if (!sftpChannel.isConnected()){
+				logger.warning("SFTP: unable to connect to sftp channel " + getConnection().getHostname() + ":" + getConnection().getPort());
+			}
+		}
+		catch (Exception e) {
+			logger.log(Level.WARNING, "SFTP client connection failed.", e);
+			throw new StorageException(e);
 		}
 	}
 
 	@Override
 	public void disconnect() {
-		if (channel != null){
-			channel.quit();
-			channel.disconnect();
+		if (sftpChannel != null){
+			sftpChannel.quit();
+			sftpChannel.disconnect();
 		}
 		
-		if (session != null){
-			session.disconnect();
+		if (secureSession != null){
+			secureSession.disconnect();
 		}
 	}
 
@@ -157,15 +162,16 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 		try {
 			if (!testTargetExists() && createIfRequired) {
-				channel.mkdir(repoPath);
+				sftpChannel.mkdir(repoPath);
 			}
 			
-			channel.mkdir(multichunkPath);
-			channel.mkdir(databasePath);
+			sftpChannel.mkdir(multichunksPath);
+			sftpChannel.mkdir(databasesPath);
+			sftpChannel.mkdir(actionsPath);
 		}
 		catch (SftpException e) {
 			disconnect();
-			throw new StorageException("Cannot create directory " + multichunkPath + ", or " + databasePath, e);
+			throw new StorageException("Cannot create directory " + multichunksPath + ", or " + databasesPath, e);
 		}
 	}
 
@@ -185,7 +191,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 					logger.log(Level.INFO, "SFTP: Downloading {0} to temp file {1}", new Object[] { remotePath, tempFile });
 				}
 	
-				channel.get(remotePath, tempFOS);
+				sftpChannel.get(remotePath, tempFOS);
 	
 				tempFOS.close();
 	
@@ -221,7 +227,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 				logger.log(Level.INFO, "SFTP: Uploading {0} to temp file {1}", new Object[] { localFile, tempRemotePath });
 			}
 
-			channel.put(fileFIS, tempRemotePath);
+			sftpChannel.put(fileFIS, tempRemotePath);
 			
 			fileFIS.close();
 
@@ -230,7 +236,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 				logger.log(Level.INFO, "SFTP: Renaming temp file {0} to file {1}", new Object[] { tempRemotePath, remotePath });
 			}
 
-			channel.rename(tempRemotePath, remotePath);
+			sftpChannel.rename(tempRemotePath, remotePath);
 		}
 		catch (SftpException | IOException ex) {
 			disconnect();
@@ -246,7 +252,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		String remotePath = getRemoteFile(remoteFile);
 
 		try {
-			channel.rm(remotePath);
+			sftpChannel.rm(remotePath);
 			return true;
 		}
 		catch (SftpException ex) {
@@ -295,10 +301,13 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	private String getRemoteFilePath(Class<? extends RemoteFile> remoteFile) {
 		if (remoteFile.equals(MultiChunkRemoteFile.class)) {
-			return multichunkPath;
+			return multichunksPath;
 		}
 		else if (remoteFile.equals(DatabaseRemoteFile.class)) {
-			return databasePath;
+			return databasesPath;
+		}
+		else if (remoteFile.equals(ActionRemoteFile.class)) {
+			return actionsPath;
 		}
 		else {
 			return repoPath;
@@ -317,21 +326,21 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 		};
 
-		channel.ls(absolutePath, selector);
+		sftpChannel.ls(absolutePath, selector);
 		return result;
 	}
 
 	@Override
 	public boolean testTargetCanWrite() {
 		try {
-			SftpATTRS stat = channel.stat(repoPath);
+			SftpATTRS stat = sftpChannel.stat(repoPath);
 			
 			if (stat.isDir()) {
 				String tempRemoteFile = repoPath + "/syncany-write-test";
 				File tempFile = File.createTempFile("syncany-write-test", "tmp");
 
-				channel.put(new FileInputStream(tempFile), tempRemoteFile);
-				channel.rm(tempRemoteFile);
+				sftpChannel.put(new FileInputStream(tempFile), tempRemoteFile);
+				sftpChannel.rm(tempRemoteFile);
 				
 				tempFile.delete();
 				
@@ -352,7 +361,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	@Override
 	public boolean testTargetExists() {
 		try {
-			SftpATTRS attrs = channel.stat(repoPath);
+			SftpATTRS attrs = sftpChannel.stat(repoPath);
 		    boolean targetExists = attrs.isDir();
 		    
 		    if (targetExists) {
@@ -379,7 +388,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		
 		// Test parent path permissions
 		try {
-			SftpATTRS parentPathStat = channel.stat(parentPath);
+			SftpATTRS parentPathStat = sftpChannel.stat(parentPath);
 			
 			boolean statSuccessful = parentPathStat != null;
 			boolean hasWritePermissions = statSuccessful && (parentPathStat.getPermissions() & 00200) != 0;
@@ -405,7 +414,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	public boolean testRepoFileExists() {
 		try {
 			String repoFilePath = getRemoteFile(new RepoRemoteFile());
-			SftpATTRS repoFileStat = channel.stat(repoFilePath);
+			SftpATTRS repoFileStat = sftpChannel.stat(repoFilePath);
 			
 			if (repoFileStat.isReg()) {
 				logger.log(Level.INFO, "testRepoFileExists: Repo file exists at " + repoFilePath);
@@ -420,5 +429,60 @@ public class SftpTransferManager extends AbstractTransferManager {
 			logger.log(Level.INFO, "testRepoFileExists: Exception when trying to check repo file existence.", e);
 			return false;
 		}
+	}
+
+	private void initKnownHosts() {
+		try {
+			File userHostKeyFile = new File(UserConfig.getUserPluginsUserdataDir("sftp"), "known_hosts");
+			
+			if (!userHostKeyFile.exists()) {
+				userHostKeyFile.createNewFile();
+			}
+			
+			secureChannel.setKnownHosts(userHostKeyFile.getAbsolutePath());
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private class SftpUserInfo implements UserInfo {
+		private UserInteractionListener userInteractionListener;
+		
+		public SftpUserInfo() {			
+			this.userInteractionListener = getConnection().getUserInteractionListener();
+		}
+
+		@Override
+		public String getPassphrase() {
+			return null; // Not supported
+		}
+
+		@Override
+		public String getPassword() {
+			return null; // Not supported
+		}
+
+		@Override
+		public boolean promptPassword(String message) {			
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Wrong SSH/SFTP password? This is NOT SUPPORTED right now.");
+			return false; // Do NOT let JSch ask for new password (if given password is wrong)
+		}
+
+		@Override
+		public boolean promptPassphrase(String message) {
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. This is NOT SUPPORTED right now.");
+			return false; // Do NOT let JSch ask for passphrase
+		}
+
+		@Override
+		public boolean promptYesNo(String message) {
+			return userInteractionListener.onUserConfirm("SSH/SFTP Confirmation", message, "Confirm");
+		}
+
+		@Override
+		public void showMessage(String message) {
+			userInteractionListener.onShowMessage(message);
+		}		
 	}
 }
