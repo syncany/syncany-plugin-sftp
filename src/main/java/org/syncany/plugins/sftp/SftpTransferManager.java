@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.syncany.connection.plugins.sftp;
+package org.syncany.plugins.sftp;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,15 +33,15 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.syncany.config.UserConfig;
-import org.syncany.connection.plugins.AbstractTransferManager;
-import org.syncany.connection.plugins.ActionRemoteFile;
-import org.syncany.connection.plugins.DatabaseRemoteFile;
-import org.syncany.connection.plugins.MultiChunkRemoteFile;
-import org.syncany.connection.plugins.RemoteFile;
-import org.syncany.connection.plugins.RepoRemoteFile;
-import org.syncany.connection.plugins.StorageException;
-import org.syncany.connection.plugins.TransferManager;
-import org.syncany.connection.plugins.UserInteractionListener;
+import org.syncany.plugins.StorageException;
+import org.syncany.plugins.UserInteractionListener;
+import org.syncany.plugins.transfer.AbstractTransferManager;
+import org.syncany.plugins.transfer.TransferManager;
+import org.syncany.plugins.transfer.files.ActionRemoteFile;
+import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
+import org.syncany.plugins.transfer.files.MultiChunkRemoteFile;
+import org.syncany.plugins.transfer.files.RemoteFile;
+import org.syncany.plugins.transfer.files.RepoRemoteFile;
 import org.syncany.util.FileUtil;
 
 import com.jcraft.jsch.ChannelSftp;
@@ -57,7 +57,7 @@ import com.jcraft.jsch.UserInfo;
  * Implements a {@link TransferManager} based on an SFTP storage backend for the
  * {@link SftpPlugin}. 
  * 
- * <p>Using an {@link SftpConnection}, the transfer manager is configured and uses 
+ * <p>Using an {@link SftpTransferSettings}, the transfer manager is configured and uses 
  * a well defined SFTP folder to store the Syncany repository data. While repo and
  * master file are stored in the given folder, databases and multichunks are stored
  * in special sub-folders:
@@ -85,7 +85,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	private String databasesPath;
 	private String actionsPath;
 
-	public SftpTransferManager(SftpConnection connection) {
+	public SftpTransferManager(SftpTransferSettings connection) {
 		super(connection);
 
 		this.secureChannel = new JSch();
@@ -98,8 +98,8 @@ public class SftpTransferManager extends AbstractTransferManager {
 	}
 
 	@Override
-	public SftpConnection getConnection() {
-		return (SftpConnection) super.getConnection();
+	public SftpTransferSettings getConnection() {
+		return (SftpTransferSettings) super.getConnection();
 	}
 
 	@Override

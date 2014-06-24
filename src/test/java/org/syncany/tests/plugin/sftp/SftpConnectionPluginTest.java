@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.syncany.tests.connection.plugin.sftp;
+package org.syncany.tests.plugin.sftp;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -35,15 +35,16 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.syncany.connection.plugins.Connection;
-import org.syncany.connection.plugins.Plugin;
-import org.syncany.connection.plugins.Plugins;
-import org.syncany.connection.plugins.RemoteFile;
-import org.syncany.connection.plugins.StorageException;
-import org.syncany.connection.plugins.TransferManager;
-import org.syncany.connection.plugins.sftp.SftpConnection;
-import org.syncany.connection.plugins.sftp.SftpPlugin;
-import org.syncany.connection.plugins.sftp.SftpTransferManager;
+import org.syncany.plugins.Plugin;
+import org.syncany.plugins.Plugins;
+import org.syncany.plugins.StorageException;
+import org.syncany.plugins.sftp.SftpPlugin;
+import org.syncany.plugins.sftp.SftpTransferManager;
+import org.syncany.plugins.sftp.SftpTransferSettings;
+import org.syncany.plugins.transfer.TransferManager;
+import org.syncany.plugins.transfer.TransferPlugin;
+import org.syncany.plugins.transfer.TransferSettings;
+import org.syncany.plugins.transfer.files.RemoteFile;
 import org.syncany.tests.util.TestFileUtil;
 
 public class SftpConnectionPluginTest {
@@ -108,7 +109,7 @@ public class SftpConnectionPluginTest {
 	
 	@Test(expected=StorageException.class)
 	public void testConnectToNonExistantFolder() throws StorageException {
-		Plugin pluginInfo = Plugins.get("sftp");
+		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
 		
 		Map<String, String> invalidPluginSettings = new HashMap<String, String>();
 		invalidPluginSettings.put("hostname", EmbeddedSftpServerTest.HOST);
@@ -117,7 +118,7 @@ public class SftpConnectionPluginTest {
 		invalidPluginSettings.put("port", "" + EmbeddedSftpServerTest.PORT);
 		invalidPluginSettings.put("path", "/path/does/not/exist");
 		
-		Connection connection = pluginInfo.createConnection();
+		TransferSettings connection = pluginInfo.createSettings();
 		connection.init(invalidPluginSettings);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection);
@@ -129,11 +130,11 @@ public class SftpConnectionPluginTest {
 	
 	@Test(expected=StorageException.class)
 	public void testConnectWithInvalidSettings() throws StorageException {
-		Plugin pluginInfo = Plugins.get("sftp");
+		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
 		
 		Map<String, String> invalidPluginSettings = new HashMap<String, String>();
 		
-		Connection connection = pluginInfo.createConnection();
+		TransferSettings connection = pluginInfo.createSettings();
 		connection.init(invalidPluginSettings);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection);
@@ -229,15 +230,15 @@ public class SftpConnectionPluginTest {
 	}	
 	
 	private TransferManager loadPluginAndCreateTransferManager() throws StorageException {
-		Plugin pluginInfo = Plugins.get("sftp");	
+		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);	
 		
-		Connection connection = pluginInfo.createConnection();				
+		TransferSettings connection = pluginInfo.createSettings();				
 		connection.init(sshPluginSettings);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection);
 
 		assertEquals("SftpPlugin expected.", SftpPlugin.class, pluginInfo.getClass());
-		assertEquals("SftpConnection expected.", SftpConnection.class, connection.getClass());
+		assertEquals("SftpConnection expected.", SftpTransferSettings.class, connection.getClass());
 		assertEquals("SftpTransferManager expected.", SftpTransferManager.class, transferManager.getClass());
 		
 		return transferManager;

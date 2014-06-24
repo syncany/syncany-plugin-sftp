@@ -15,33 +15,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.syncany.connection.plugins.sftp;
+package org.syncany.plugins.sftp;
 
-import org.syncany.connection.plugins.Connection;
-import org.syncany.connection.plugins.Plugin;
-import org.syncany.connection.plugins.TransferManager;
+import org.syncany.plugins.Plugin;
+import org.syncany.plugins.transfer.TransferManager;
+import org.syncany.plugins.transfer.TransferPlugin;
+import org.syncany.plugins.transfer.TransferSettings;
 
 /**
  * Identifies the SFTP-based storage {@link Plugin} for Syncany. 
  * 
  * <p>This class defines the identifier, name and 
  * version of the plugin. It furthermore allows the instantiation 
- * of a plugin-specific {@link SftpConnection}. 
+ * of a plugin-specific {@link SftpTransferSettings}. 
  * 
  * @author Vincent Wiencek <vwiencek@gmail.com>
  */
-public class SftpPlugin extends Plugin {
+public class SftpPlugin extends TransferPlugin {
 	public SftpPlugin() {
 		super("sftp");
 	}
 
     @Override
-    public TransferManager createTransferManager(Connection connection) {
-        return new SftpTransferManager((SftpConnection) connection);
+    public TransferManager createTransferManager(TransferSettings connection) {
+        return new SftpTransferManager((SftpTransferSettings) connection);
     }
     
 	@Override
-	public Connection createConnection() {
-		return new SftpConnection();
+	public TransferSettings createSettings() {
+		return new SftpTransferSettings();
 	}
 }
