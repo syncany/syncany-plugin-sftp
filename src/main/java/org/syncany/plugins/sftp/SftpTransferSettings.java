@@ -115,7 +115,7 @@ public class SftpTransferSettings extends TransferSettings {
 		return new PluginOptionSpecs(
 			new PluginOptionSpec("hostname", "Hostname", ValueType.STRING, true, false, null),
 			new PluginOptionSpec("username", "Username", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("password", "Password", ValueType.STRING, false, true, null),
+			new PluginOptionSpec("password", "Password", ValueType.STRING, true, true, null),
 			new PluginOptionSpec("privatekey", "Private key path", ValueType.STRING, false, false, NO_KEY),
 			new PluginOptionSpec("path", "Path", ValueType.STRING, true, false, null),
 			new PluginOptionSpec("port", "Port", ValueType.INT, false, false, "22")
