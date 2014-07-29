@@ -38,9 +38,9 @@ public class SftpTransferSettings extends TransferSettings {
 	private static final String NO_KEY = "none";
 
 	private String hostname;
-	private File privateKey;
 	private String username;
 	private String password;
+	private File privateKey;
 	private String path;
 	private int port;
 
@@ -103,7 +103,10 @@ public class SftpTransferSettings extends TransferSettings {
 
 		if (optionValues.get("privatekey") != null && !NO_KEY.equalsIgnoreCase(optionValues.get("privatekey"))) {
 			this.privateKey = new File(optionValues.get("privatekey"));
-			if (!this.privateKey.isFile() || !this.privateKey.canRead()) throw new StorageException("Not a valid privatekey");
+			
+			if (!this.privateKey.isFile() || !this.privateKey.canRead()) {
+				throw new StorageException("Not a valid privatekey");
+			}
 		}
 	}
 
@@ -111,12 +114,12 @@ public class SftpTransferSettings extends TransferSettings {
 	public PluginOptionSpecs getOptionSpecs() {
 		return new PluginOptionSpecs(
 			new PluginOptionSpec("hostname", "Hostname", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("privatekey", "Privatekey Path", ValueType.STRING, false, false, NO_KEY),
 			new PluginOptionSpec("username", "Username", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("password", "Password", ValueType.STRING, true, true, null),
+			new PluginOptionSpec("password", "Password", ValueType.STRING, false, true, null),
+			new PluginOptionSpec("privatekey", "Private key path", ValueType.STRING, false, false, NO_KEY),
 			new PluginOptionSpec("path", "Path", ValueType.STRING, true, false, null),
 			new PluginOptionSpec("port", "Port", ValueType.INT, false, false, "22")
-			);
+		);
 	}
 
 	@Override

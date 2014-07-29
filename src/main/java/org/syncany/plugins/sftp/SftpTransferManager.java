@@ -65,6 +65,7 @@ import com.jcraft.jsch.UserInfo;
  * <ul>
  *   <li>The <tt>databases</tt> folder keeps all the {@link DatabaseRemoteFile}s</li>
  *   <li>The <tt>multichunks</tt> folder keeps the actual data within the {@link MultiChunkRemoteFile}s</li>
+ *   <li>The <tt>actions</tt> folder keeps the {@link ActionRemoteFile}s</li>
  * </ul>
  *
  * <p>All operations are auto-connected, i.e. a connection is automatically
@@ -114,23 +115,26 @@ public class SftpTransferManager extends AbstractTransferManager {
 				logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getConnection().getHostname(), getConnection().getPort() });
 			}
 
-			Properties properties = new Properties();
-			properties.put("StrictHostKeyChecking", "ask");
-
-			// do we use pubkey authentication?
-			if (getConnection().getPrivateKey() != null) {
+			// Use pubkey authentication?
+			boolean usePublicKeyAuth = getConnection().getPrivateKey() != null;
+			
+			if (usePublicKeyAuth) {
 				if (logger.isLoggable(Level.INFO)) {
 					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getConnection().getPrivateKey().getAbsolutePath());
 				}
+				
 				secureChannel.addIdentity(getConnection().getPrivateKey().getAbsolutePath(), getConnection().getPassword());
 			}
 
-			secureSession = secureChannel.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
+			// Initialize secure session, and connect
+			Properties properties = new Properties();
+			properties.put("StrictHostKeyChecking", "ask");
 
+			secureSession = secureChannel.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
 			secureSession.setConfig(properties);
 
-			// redundant when using pubkey auth
-			if (getConnection().getPrivateKey() == null) {
+			// No password needed if pubkey auth is used
+			if (!usePublicKeyAuth) {
 				secureSession.setPassword(getConnection().getPassword());
 			}
 
@@ -140,16 +144,9 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 			secureSession.connect();
 
-			if (!secureSession.isConnected()) {
-				logger.warning("SFTP: unable to connect to sftp host " + getConnection().getHostname() + ":" + getConnection().getPort());
-			}
-
+			// Initialize SFTP channel, and connect
 			sftpChannel = (ChannelSftp) secureSession.openChannel("sftp");
 			sftpChannel.connect();
-
-			if (!sftpChannel.isConnected()){
-				logger.warning("SFTP: unable to connect to sftp channel " + getConnection().getHostname() + ":" + getConnection().getPort());
-			}
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "SFTP client connection failed.", e);
@@ -329,12 +326,15 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	private List<LsEntry> listEntries(String absolutePath) throws SftpException{
 		final List<LsEntry> result = new ArrayList<>();
+		
 		LsEntrySelector selector = new LsEntrySelector() {
 			public int select(LsEntry entry) {
 				if (!entry.getFilename().equals(".")
 						&& !entry.getFilename().equals("..")) {
+					
 					result.add(entry);
 				}
+				
 				return CONTINUE;
 			}
 		};
