@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,23 +55,24 @@ import com.jcraft.jsch.UserInfo;
 
 /**
  * Implements a {@link TransferManager} based on an SFTP storage backend for the
- * {@link SftpPlugin}. 
- * 
- * <p>Using an {@link SftpTransferSettings}, the transfer manager is configured and uses 
+ * {@link SftpPlugin}.
+ *
+ * <p>Using an {@link SftpTransferSettings}, the transfer manager is configured and uses
  * a well defined SFTP folder to store the Syncany repository data. While repo and
  * master file are stored in the given folder, databases and multichunks are stored
  * in special sub-folders:
- * 
+ *
  * <ul>
  *   <li>The <tt>databases</tt> folder keeps all the {@link DatabaseRemoteFile}s</li>
  *   <li>The <tt>multichunks</tt> folder keeps the actual data within the {@link MultiChunkRemoteFile}s</li>
  * </ul>
- * 
+ *
  * <p>All operations are auto-connected, i.e. a connection is automatically
- * established. 
- * 
+ * established.
+ *
  * @author Vincent Wiencek <vwiencek@gmail.com>
  * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Christian Roth <christian.roth@port17.de>
  */
 public class SftpTransferManager extends AbstractTransferManager {
 	private static final Logger logger = Logger.getLogger(SftpTransferManager.class.getSimpleName());
@@ -93,8 +94,8 @@ public class SftpTransferManager extends AbstractTransferManager {
 		this.multichunksPath = connection.getPath() + "/multichunks";
 		this.databasesPath = connection.getPath() + "/databases";
 		this.actionsPath = connection.getPath() + "/actions";
-		
-		initKnownHosts();		
+
+		initKnownHosts();
 	}
 
 	@Override
@@ -112,28 +113,40 @@ public class SftpTransferManager extends AbstractTransferManager {
 			if (logger.isLoggable(Level.INFO)) {
 				logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getConnection().getHostname(), getConnection().getPort() });
 			}
-			
+
 			Properties properties = new Properties();
-			properties.put("StrictHostKeyChecking", "ask"); 
-			
+			properties.put("StrictHostKeyChecking", "ask");
+
+			// do we use pubkey authentication?
+			if (getConnection().getPrivateKey() != null) {
+				if (logger.isLoggable(Level.INFO)) {
+					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getConnection().getPrivateKey().getAbsolutePath());
+				}
+				secureChannel.addIdentity(getConnection().getPrivateKey().getAbsolutePath(), getConnection().getPassword());
+			}
+
 			secureSession = secureChannel.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
 
 			secureSession.setConfig(properties);
-			secureSession.setPassword(getConnection().getPassword());
-			
+
+			// redundant when using pubkey auth
+			if (getConnection().getPrivateKey() == null) {
+				secureSession.setPassword(getConnection().getPassword());
+			}
+
 			if (getConnection().getUserInteractionListener() != null) {
 				secureSession.setUserInfo(new SftpUserInfo());
 			}
-			
+
 			secureSession.connect();
-			
+
 			if (!secureSession.isConnected()) {
 				logger.warning("SFTP: unable to connect to sftp host " + getConnection().getHostname() + ":" + getConnection().getPort());
 			}
 
 			sftpChannel = (ChannelSftp) secureSession.openChannel("sftp");
 			sftpChannel.connect();
-			
+
 			if (!sftpChannel.isConnected()){
 				logger.warning("SFTP: unable to connect to sftp channel " + getConnection().getHostname() + ":" + getConnection().getPort());
 			}
@@ -150,7 +163,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			sftpChannel.quit();
 			sftpChannel.disconnect();
 		}
-		
+
 		if (secureSession != null){
 			secureSession.disconnect();
 		}
@@ -164,7 +177,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			if (!testTargetExists() && createIfRequired) {
 				sftpChannel.mkdir(repoPath);
 			}
-			
+
 			sftpChannel.mkdir(multichunksPath);
 			sftpChannel.mkdir(databasesPath);
 			sftpChannel.mkdir(actionsPath);
@@ -186,20 +199,20 @@ public class SftpTransferManager extends AbstractTransferManager {
 				// Download file
 				File tempFile = createTempFile(localFile.getName());
 				OutputStream tempFOS = new FileOutputStream(tempFile);
-	
+
 				if (logger.isLoggable(Level.INFO)) {
 					logger.log(Level.INFO, "SFTP: Downloading {0} to temp file {1}", new Object[] { remotePath, tempFile });
 				}
-	
+
 				sftpChannel.get(remotePath, tempFOS);
-	
+
 				tempFOS.close();
-	
+
 				// Move file
 				if (logger.isLoggable(Level.INFO)) {
 					logger.log(Level.INFO, "SFTP: Renaming temp file {0} to file {1}", new Object[] { tempFile, localFile });
 				}
-	
+
 				localFile.delete();
 				FileUtils.moveFile(tempFile, localFile);
 				tempFile.delete();
@@ -228,7 +241,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			sftpChannel.put(fileFIS, tempRemotePath);
-			
+
 			fileFIS.close();
 
 			// Move
@@ -269,9 +282,9 @@ public class SftpTransferManager extends AbstractTransferManager {
 		try {
 			// List folder
 			String remoteFilePath = getRemoteFilePath(remoteFileClass);
-			
+
 			List<LsEntry> entries = listEntries(remoteFilePath + "/");
-			
+
 			// Create RemoteFile objects
 			Map<String, T> remoteFiles = new HashMap<String, T>();
 
@@ -313,7 +326,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			return repoPath;
 		}
 	}
-	
+
 	private List<LsEntry> listEntries(String absolutePath) throws SftpException{
 		final List<LsEntry> result = new ArrayList<>();
 		LsEntrySelector selector = new LsEntrySelector() {
@@ -334,22 +347,22 @@ public class SftpTransferManager extends AbstractTransferManager {
 	public boolean testTargetCanWrite() {
 		try {
 			SftpATTRS stat = sftpChannel.stat(repoPath);
-			
+
 			if (stat.isDir()) {
 				String tempRemoteFile = repoPath + "/syncany-write-test";
 				File tempFile = File.createTempFile("syncany-write-test", "tmp");
 
 				sftpChannel.put(new FileInputStream(tempFile), tempRemoteFile);
 				sftpChannel.rm(tempRemoteFile);
-				
+
 				tempFile.delete();
-				
+
 				logger.log(Level.INFO, "testTargetCanWrite: Can write, test file created/deleted successfully.");
 				return true;
 			}
 			else {
 				logger.log(Level.INFO, "testTargetCanWrite: Can NOT write, target does not exist.");
-				return false;				
+				return false;
 			}
 		}
 		catch (Exception e) {
@@ -363,7 +376,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		try {
 			SftpATTRS attrs = sftpChannel.stat(repoPath);
 		    boolean targetExists = attrs.isDir();
-		    
+
 		    if (targetExists) {
 		    	logger.log(Level.INFO, "testTargetExists: Target does exist.");
 				return true;
@@ -372,7 +385,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		    	logger.log(Level.INFO, "testTargetExists: Target does NOT exist.");
 				return false;
 		    }
-		} 
+		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "testTargetExists: Target does NOT exist, error occurred.", e);
 		    return false;
@@ -385,24 +398,24 @@ public class SftpTransferManager extends AbstractTransferManager {
 		String repoPathNoSlash = FileUtil.removeTrailingSlash(repoPath);
 		int repoPathLastSlash = repoPathNoSlash.lastIndexOf("/");
 		String parentPath = (repoPathLastSlash > 0) ? repoPathNoSlash.substring(0, repoPathLastSlash) : "/";
-		
+
 		// Test parent path permissions
 		try {
 			SftpATTRS parentPathStat = sftpChannel.stat(parentPath);
-			
+
 			boolean statSuccessful = parentPathStat != null;
 			boolean hasWritePermissions = statSuccessful && (parentPathStat.getPermissions() & 00200) != 0;
-			
+
 			if (hasWritePermissions) {
 				logger.log(Level.INFO, "testTargetCanCreate: Can create target at " + parentPathStat);
 				return true;
 			}
 			else {
-				logger.log(Level.INFO, "testTargetCanCreate: Can NOT create target (statSuccessful = " + statSuccessful 
+				logger.log(Level.INFO, "testTargetCanCreate: Can NOT create target (statSuccessful = " + statSuccessful
 						+ ", hasWritePermissions = " + hasWritePermissions + ")");
-				
+
 				return false;
-			}			
+			}
 		}
 		catch (SftpException e) {
 			logger.log(Level.INFO, "testTargetCanCreate: Can NOT create target at " + parentPath, e);
@@ -415,7 +428,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		try {
 			String repoFilePath = getRemoteFile(new RepoRemoteFile());
 			SftpATTRS repoFileStat = sftpChannel.stat(repoFilePath);
-			
+
 			if (repoFileStat.isReg()) {
 				logger.log(Level.INFO, "testRepoFileExists: Repo file exists at " + repoFilePath);
 				return true;
@@ -434,22 +447,22 @@ public class SftpTransferManager extends AbstractTransferManager {
 	private void initKnownHosts() {
 		try {
 			File userHostKeyFile = new File(UserConfig.getUserPluginsUserdataDir("sftp"), "known_hosts");
-			
+
 			if (!userHostKeyFile.exists()) {
 				userHostKeyFile.createNewFile();
 			}
-			
+
 			secureChannel.setKnownHosts(userHostKeyFile.getAbsolutePath());
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private class SftpUserInfo implements UserInfo {
 		private UserInteractionListener userInteractionListener;
-		
-		public SftpUserInfo() {			
+
+		public SftpUserInfo() {
 			this.userInteractionListener = getConnection().getUserInteractionListener();
 		}
 
@@ -464,7 +477,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		}
 
 		@Override
-		public boolean promptPassword(String message) {			
+		public boolean promptPassword(String message) {
 			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Wrong SSH/SFTP password? This is NOT SUPPORTED right now.");
 			return false; // Do NOT let JSch ask for new password (if given password is wrong)
 		}
@@ -483,6 +496,6 @@ public class SftpTransferManager extends AbstractTransferManager {
 		@Override
 		public void showMessage(String message) {
 			userInteractionListener.onShowMessage(message);
-		}		
+		}
 	}
 }
