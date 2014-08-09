@@ -36,7 +36,9 @@ import org.syncany.tests.scenarios.FileVanishedScenarioTest;
 import org.syncany.tests.scenarios.FilenameCapitalizationWindowsScenarioTest;
 import org.syncany.tests.scenarios.FirstVersionDirtyScenarioTest;
 import org.syncany.tests.scenarios.FolderPermissionChangeScenarioTest;
+import org.syncany.tests.scenarios.IdenticalFileMoveScenarioTest;
 import org.syncany.tests.scenarios.IgnoredFileScenarioTest;
+import org.syncany.tests.scenarios.Issue143ScenarioTest;
 import org.syncany.tests.scenarios.ManyRenamesScenarioTest;
 import org.syncany.tests.scenarios.ManySyncUpsAndDatabaseFileCleanupScenarioTest;
 import org.syncany.tests.scenarios.ManySyncUpsAndOtherClientSyncDownScenarioTest;
@@ -48,6 +50,7 @@ import org.syncany.tests.scenarios.RenameFileWithDiffModifiedDateScenarioTest;
 import org.syncany.tests.scenarios.RenameNoDownloadMultiChunksScenarioTest;
 import org.syncany.tests.scenarios.RenameToExistingFileScenarioTest;
 import org.syncany.tests.scenarios.RestoreFileScenarioTest;
+import org.syncany.tests.scenarios.RestrictedXmlCharInFilenameScenarioTest;
 import org.syncany.tests.scenarios.SingleFileNoConflictsScenarioTest;
 import org.syncany.tests.scenarios.SingleFolderNoConflictsScenarioTest;
 import org.syncany.tests.scenarios.SymlinkSyncScenarioTest;
@@ -62,6 +65,7 @@ import org.syncany.tests.scenarios.DirtyDatabaseVersionsScenarioTest;
 	CleanupMergeDatabaseFilesScenarioTest.class,
 	CreateSimilarFileParallelScenarioTest.class,
 	DirtyDatabaseScenarioTest.class,
+	DirtyDatabaseVersionsScenarioTest.class,
 	EmptyFileScenarioTest.class,
 	EmptyFolderScenarioTest.class,
 	EvilCUpWithoutDownScenarioTest.class,
@@ -71,7 +75,9 @@ import org.syncany.tests.scenarios.DirtyDatabaseVersionsScenarioTest;
 	FileVanishedScenarioTest.class,
 	FirstVersionDirtyScenarioTest.class,
 	FolderPermissionChangeScenarioTest.class,
+	IdenticalFileMoveScenarioTest.class,
 	IgnoredFileScenarioTest.class,
+	Issue143ScenarioTest.class,
 	ManyRenamesScenarioTest.class,
 	ManySyncUpsAndDatabaseFileCleanupScenarioTest.class,
 	ManySyncUpsLargeFileScenarioTest.class,
@@ -82,11 +88,11 @@ import org.syncany.tests.scenarios.DirtyDatabaseVersionsScenarioTest;
 	RenameToExistingFileScenarioTest.class,
 	RenameNoDownloadMultiChunksScenarioTest.class,
 	RenameDeleteScenarioTest.class,
+	RestrictedXmlCharInFilenameScenarioTest.class,
 	RestoreFileScenarioTest.class,
 	SingleFileNoConflictsScenarioTest.class,
 	SingleFolderNoConflictsScenarioTest.class,
 	SymlinkSyncScenarioTest.class,
-	DirtyDatabaseVersionsScenarioTest.class
 })
 public class ScenarioTestSuite {
 	// This class executes all tests
