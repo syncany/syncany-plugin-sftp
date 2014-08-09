@@ -10,7 +10,7 @@ project.ext {
 	pluginName = "SFTP"
 	pluginVersion = "0.1.8-alpha"	
 	pluginDate = new Date()
-	pluginAppMinVersion = "0.1.7-alpha"
+	pluginAppMinVersion = "0.1.8-alpha"
 	pluginRelease = rootProject.ext.applicationRelease
 	pluginConflictsWith = ""
 	
