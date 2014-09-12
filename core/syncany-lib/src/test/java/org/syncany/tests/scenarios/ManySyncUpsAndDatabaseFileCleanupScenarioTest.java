@@ -22,7 +22,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.Test;
-import org.syncany.plugins.local.LocalConnection;
+import org.syncany.operations.cleanup.CleanupOperationOptions;
+import org.syncany.plugins.local.LocalTransferSettings;
 import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
 import org.syncany.tests.util.TestClient;
 import org.syncany.tests.util.TestConfigUtil;
@@ -31,7 +32,7 @@ public class ManySyncUpsAndDatabaseFileCleanupScenarioTest {
 	@Test
 	public void testManySyncUpsAndDatabaseFileCleanup() throws Exception {
 		// Setup 
-		LocalConnection testConnection = (LocalConnection) TestConfigUtil.createTestLocalConnection();		
+		LocalTransferSettings testConnection = (LocalTransferSettings) TestConfigUtil.createTestLocalConnection();		
 		TestClient clientA = new TestClient("A", testConnection);
 		
 		// ROUND 1: many sync up (no cleanup expected here)		
@@ -53,14 +54,14 @@ public class ManySyncUpsAndDatabaseFileCleanupScenarioTest {
 		
 		clientA.cleanup(); // Force cleanup
 
-		for (int i=1; i<=10; i++) {
+		for (int i=1; i<=15; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
 			assertTrue("Database file should NOT exist: "+expectedDatabaseFile, !expectedDatabaseFile.exists());
 		}
 		
-		for (int i=11; i<=16; i++) {
+		for (int i=16; i<=16; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
@@ -68,19 +69,19 @@ public class ManySyncUpsAndDatabaseFileCleanupScenarioTest {
 		}
 		
 		// ROUND 3: many sync up (no cleanup expected here)		
-		for (int i=17; i<=25; i++) {
+		for (int i=17; i<=30; i++) {
 			clientA.createNewFile("file"+i, 1);
 			clientA.up();		
 		}
 		
-		for (int i=1; i<=10; i++) {
+		for (int i=1; i<=15; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
 			assertTrue("Database file should NOT exist: "+expectedDatabaseFile, !expectedDatabaseFile.exists());
 		}
 		
-		for (int i=11; i<=25; i++) {
+		for (int i=16; i<=30; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
@@ -88,19 +89,23 @@ public class ManySyncUpsAndDatabaseFileCleanupScenarioTest {
 		}		
 		
 		// ROUND 4: 1x sync up (cleanup expected!)
-		clientA.createNewFile("file26", 1);
+		clientA.createNewFile("file31", 1);
 		clientA.up();		
 		
-		clientA.cleanup(); // Force cleanup 
+		CleanupOperationOptions options = new CleanupOperationOptions();
+		
+		options.setForce(true);
+		
+		clientA.cleanup(options); // Force cleanup 
 
-		for (int i=1; i<=20; i++) {
+		for (int i=1; i<=30; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
 			assertTrue("Database file should NOT exist: "+expectedDatabaseFile, !expectedDatabaseFile.exists());
 		}
 		 
-		for (int i=21; i<=25; i++) {
+		for (int i=31; i<=31; i++) {
 			DatabaseRemoteFile expectedDatabaseRemoteFile = new DatabaseRemoteFile("A", i);
 			File expectedDatabaseFile = new File(testConnection.getRepositoryPath()+"/databases/"+expectedDatabaseRemoteFile.getName());
 			
