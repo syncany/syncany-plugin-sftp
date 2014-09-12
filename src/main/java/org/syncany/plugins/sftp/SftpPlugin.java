@@ -17,6 +17,7 @@
  */
 package org.syncany.plugins.sftp;
 
+import org.syncany.config.Config;
 import org.syncany.plugins.Plugin;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
@@ -37,8 +38,8 @@ public class SftpPlugin extends TransferPlugin {
 	}
 
     @Override
-    public TransferManager createTransferManager(TransferSettings connection) {
-        return new SftpTransferManager((SftpTransferSettings) connection);
+    public TransferManager createTransferManager(TransferSettings connection, Config config) {
+        return new SftpTransferManager((SftpTransferSettings) connection, config);
     }
     
 	@Override

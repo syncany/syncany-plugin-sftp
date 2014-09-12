@@ -8,9 +8,9 @@ configurations {
 project.ext {
 	pluginId = "sftp"
 	pluginName = "SFTP"
-	pluginVersion = "0.1.8-alpha"	
+	pluginVersion = "0.1.10-alpha"	
 	pluginDate = new Date()
-	pluginAppMinVersion = "0.1.8-alpha"
+	pluginAppMinVersion = "0.1.10-alpha"
 	pluginRelease = rootProject.ext.applicationRelease
 	pluginConflictsWith = ""
 	

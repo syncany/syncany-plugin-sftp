@@ -32,16 +32,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.syncany.config.Config;
 import org.syncany.config.UserConfig;
-import org.syncany.plugins.StorageException;
 import org.syncany.plugins.UserInteractionListener;
 import org.syncany.plugins.transfer.AbstractTransferManager;
+import org.syncany.plugins.transfer.StorageException;
+import org.syncany.plugins.transfer.StorageMoveException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.files.ActionRemoteFile;
 import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
-import org.syncany.plugins.transfer.files.MultiChunkRemoteFile;
+import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
 import org.syncany.plugins.transfer.files.RemoteFile;
-import org.syncany.plugins.transfer.files.RepoRemoteFile;
+import org.syncany.plugins.transfer.files.SyncanyRemoteFile;
+import org.syncany.plugins.transfer.files.TempRemoteFile;
+import org.syncany.plugins.transfer.files.TransactionRemoteFile;
 import org.syncany.util.FileUtil;
 
 import com.jcraft.jsch.ChannelSftp;
@@ -86,22 +90,26 @@ public class SftpTransferManager extends AbstractTransferManager {
 	private String multichunksPath;
 	private String databasesPath;
 	private String actionsPath;
+	private String transactionsPath;
+	private String tempPath;
 
-	public SftpTransferManager(SftpTransferSettings connection) {
-		super(connection);
+	public SftpTransferManager(SftpTransferSettings connection, Config config) {
+		super(connection, config);
 
 		this.secureChannel = new JSch();
 		this.repoPath = connection.getPath();
 		this.multichunksPath = connection.getPath() + "/multichunks";
 		this.databasesPath = connection.getPath() + "/databases";
 		this.actionsPath = connection.getPath() + "/actions";
+		this.transactionsPath = connection.getPath() + "/transactions";
+		this.tempPath = connection.getPath() + "/temporary";
 
 		initKnownHosts();
 	}
 
 	@Override
-	public SftpTransferSettings getConnection() {
-		return (SftpTransferSettings) super.getConnection();
+	public SftpTransferSettings getSettings() {
+		return (SftpTransferSettings) super.getSettings();
 	}
 
 	@Override
@@ -112,33 +120,33 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			if (logger.isLoggable(Level.INFO)) {
-				logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getConnection().getHostname(), getConnection().getPort() });
+				logger.log(Level.INFO, "SFTP client connecting to {0}:{1} ...", new Object[] { getSettings().getHostname(), getSettings().getPort() });
 			}
 
 			// Use pubkey authentication?
-			boolean usePublicKeyAuth = getConnection().getPrivateKey() != null;
+			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null;
 			
 			if (usePublicKeyAuth) {
 				if (logger.isLoggable(Level.INFO)) {
-					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getConnection().getPrivateKey().getAbsolutePath());
+					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getSettings().getPrivateKey().getAbsolutePath());
 				}
 				
-				secureChannel.addIdentity(getConnection().getPrivateKey().getAbsolutePath(), getConnection().getPassword());
+				secureChannel.addIdentity(getSettings().getPrivateKey().getAbsolutePath(), getSettings().getPassword());
 			}
 
 			// Initialize secure session, and connect
 			Properties properties = new Properties();
 			properties.put("StrictHostKeyChecking", "ask");
 
-			secureSession = secureChannel.getSession(getConnection().getUsername(), getConnection().getHostname(), getConnection().getPort());
+			secureSession = secureChannel.getSession(getSettings().getUsername(), getSettings().getHostname(), getSettings().getPort());
 			secureSession.setConfig(properties);
 
 			// No password needed if pubkey auth is used
 			if (!usePublicKeyAuth) {
-				secureSession.setPassword(getConnection().getPassword());
+				secureSession.setPassword(getSettings().getPassword());
 			}
 
-			if (getConnection().getUserInteractionListener() != null) {
+			if (getSettings().getUserInteractionListener() != null) {
 				secureSession.setUserInfo(new SftpUserInfo());
 			}
 
@@ -178,6 +186,8 @@ public class SftpTransferManager extends AbstractTransferManager {
 			sftpChannel.mkdir(multichunksPath);
 			sftpChannel.mkdir(databasesPath);
 			sftpChannel.mkdir(actionsPath);
+			sftpChannel.mkdir(transactionsPath);
+			sftpChannel.mkdir(tempPath);
 		}
 		catch (SftpException e) {
 			disconnect();
@@ -227,7 +237,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		connect();
 
 		String remotePath = getRemoteFile(remoteFile);
-		String tempRemotePath = getConnection().getPath() + "/temp-" + remoteFile.getName();
+		String tempRemotePath = getSettings().getPath() + "/temp-" + remoteFile.getName();
 
 		try {
 			// Upload to temp file
@@ -271,6 +281,22 @@ public class SftpTransferManager extends AbstractTransferManager {
 			throw new StorageException(ex);
 		}
 	}
+	
+	@Override
+	public void move(RemoteFile sourceFile, RemoteFile targetFile) throws StorageException {
+		connect();
+
+		String sourceRemotePath = getRemoteFile(sourceFile);
+		String targetRemotePath = getRemoteFile(targetFile);
+
+		try {
+			sftpChannel.rename(sourceRemotePath, targetRemotePath);
+		}
+		catch (SftpException e) {
+			logger.log(Level.SEVERE, "Could not rename file " + sourceRemotePath + " to " + targetRemotePath, e);
+			throw new StorageMoveException("Could not rename file " + sourceRemotePath + " to " + targetRemotePath, e);
+		}
+	}
 
 	@Override
 	public <T extends RemoteFile> Map<String, T> list(Class<T> remoteFileClass) throws StorageException {
@@ -310,7 +336,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	}
 
 	private String getRemoteFilePath(Class<? extends RemoteFile> remoteFile) {
-		if (remoteFile.equals(MultiChunkRemoteFile.class)) {
+		if (remoteFile.equals(MultichunkRemoteFile.class)) {
 			return multichunksPath;
 		}
 		else if (remoteFile.equals(DatabaseRemoteFile.class)) {
@@ -318,6 +344,12 @@ public class SftpTransferManager extends AbstractTransferManager {
 		}
 		else if (remoteFile.equals(ActionRemoteFile.class)) {
 			return actionsPath;
+		}
+		else if (remoteFile.equals(TransactionRemoteFile.class)) {
+			return transactionsPath;
+		}
+		else if (remoteFile.equals(TempRemoteFile.class)) {
+			return tempPath;
 		}
 		else {
 			return repoPath;
@@ -426,7 +458,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 	@Override
 	public boolean testRepoFileExists() {
 		try {
-			String repoFilePath = getRemoteFile(new RepoRemoteFile());
+			String repoFilePath = getRemoteFile(new SyncanyRemoteFile());
 			SftpATTRS repoFileStat = sftpChannel.stat(repoFilePath);
 
 			if (repoFileStat.isReg()) {
@@ -463,7 +495,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		private UserInteractionListener userInteractionListener;
 
 		public SftpUserInfo() {
-			this.userInteractionListener = getConnection().getUserInteractionListener();
+			this.userInteractionListener = getSettings().getUserInteractionListener();
 		}
 
 		@Override
