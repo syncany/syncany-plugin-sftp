@@ -37,10 +37,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.syncany.plugins.Plugin;
 import org.syncany.plugins.Plugins;
-import org.syncany.plugins.StorageException;
 import org.syncany.plugins.sftp.SftpPlugin;
 import org.syncany.plugins.sftp.SftpTransferManager;
 import org.syncany.plugins.sftp.SftpTransferSettings;
+import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
 import org.syncany.plugins.transfer.TransferSettings;
@@ -121,7 +121,7 @@ public class SftpConnectionPluginTest {
 		TransferSettings connection = pluginInfo.createSettings();
 		connection.init(invalidPluginSettings);
 		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection);
+		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();	
@@ -137,7 +137,7 @@ public class SftpConnectionPluginTest {
 		TransferSettings connection = pluginInfo.createSettings();
 		connection.init(invalidPluginSettings);
 		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection);
+		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();		
@@ -235,7 +235,7 @@ public class SftpConnectionPluginTest {
 		TransferSettings connection = pluginInfo.createSettings();				
 		connection.init(sshPluginSettings);
 		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection);
+		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 
 		assertEquals("SftpPlugin expected.", SftpPlugin.class, pluginInfo.getClass());
 		assertEquals("SftpConnection expected.", SftpTransferSettings.class, connection.getClass());
