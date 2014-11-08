@@ -37,20 +37,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.syncany.plugins.Plugin;
 import org.syncany.plugins.Plugins;
-import org.syncany.plugins.sftp.SftpPlugin;
 import org.syncany.plugins.sftp.SftpTransferManager;
+import org.syncany.plugins.sftp.SftpTransferPlugin;
 import org.syncany.plugins.sftp.SftpTransferSettings;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
-import org.syncany.plugins.transfer.TransferSettings;
 import org.syncany.plugins.transfer.files.RemoteFile;
 import org.syncany.tests.util.TestFileUtil;
 
 public class SftpConnectionPluginTest {
 	private static File tempLocalSourceDir;
 	
-	private Map<String, String> sshPluginSettings;
+	private SftpTransferSettings validSftpTransferSettings;
 	
 	@BeforeClass
 	public static void beforeTestSetup() {
@@ -79,12 +78,13 @@ public class SftpConnectionPluginTest {
 		tempLocalSourceDir = new File(rootDir+"/local");
 		tempLocalSourceDir.mkdir();
 		
-		sshPluginSettings = new HashMap<String, String>();
-		sshPluginSettings.put("hostname", EmbeddedSftpServerTest.HOST);
-		sshPluginSettings.put("username", "user");
-		sshPluginSettings.put("password", "pass");
-		sshPluginSettings.put("port", "" + EmbeddedSftpServerTest.PORT);
-		sshPluginSettings.put("path", "/repo");
+		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
+		validSftpTransferSettings = pluginInfo.createEmptySettings();
+		validSftpTransferSettings.setHostname(EmbeddedSftpServerTest.HOST);
+		validSftpTransferSettings.setUsername("user");
+		validSftpTransferSettings.setPassword("pass");
+		validSftpTransferSettings.setPort(EmbeddedSftpServerTest.PORT);
+		validSftpTransferSettings.setPath("/repo");		
 	}
 	
 	@After
@@ -110,16 +110,13 @@ public class SftpConnectionPluginTest {
 	@Test(expected=StorageException.class)
 	public void testConnectToNonExistantFolder() throws StorageException {
 		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
-		
-		Map<String, String> invalidPluginSettings = new HashMap<String, String>();
-		invalidPluginSettings.put("hostname", EmbeddedSftpServerTest.HOST);
-		invalidPluginSettings.put("username", "user");
-		invalidPluginSettings.put("password", "pass");
-		invalidPluginSettings.put("port", "" + EmbeddedSftpServerTest.PORT);
-		invalidPluginSettings.put("path", "/path/does/not/exist");
-		
-		TransferSettings connection = pluginInfo.createSettings();
-		connection.init(invalidPluginSettings);
+				
+		SftpTransferSettings connection = pluginInfo.createEmptySettings();
+		connection.setHostname(EmbeddedSftpServerTest.HOST);
+		connection.setUsername("user");
+		connection.setPassword("pass");
+		connection.setPort(EmbeddedSftpServerTest.PORT);
+		connection.setPath("/path/does/not/exist");
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
@@ -132,11 +129,7 @@ public class SftpConnectionPluginTest {
 	public void testConnectWithInvalidSettings() throws StorageException {
 		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
 		
-		Map<String, String> invalidPluginSettings = new HashMap<String, String>();
-		
-		TransferSettings connection = pluginInfo.createSettings();
-		connection.init(invalidPluginSettings);
-		
+		SftpTransferSettings connection = pluginInfo.createEmptySettings();		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
 		// This should cause a Storage exception, because the path does not exist
@@ -232,13 +225,10 @@ public class SftpConnectionPluginTest {
 	private TransferManager loadPluginAndCreateTransferManager() throws StorageException {
 		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);	
 		
-		TransferSettings connection = pluginInfo.createSettings();				
-		connection.init(sshPluginSettings);
-		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
+		TransferManager transferManager = pluginInfo.createTransferManager(validSftpTransferSettings, null);
 
-		assertEquals("SftpPlugin expected.", SftpPlugin.class, pluginInfo.getClass());
-		assertEquals("SftpConnection expected.", SftpTransferSettings.class, connection.getClass());
+		assertEquals("SftpPlugin expected.", SftpTransferPlugin.class, pluginInfo.getClass());
+		assertEquals("SftpConnection expected.", SftpTransferSettings.class, validSftpTransferSettings.getClass());
 		assertEquals("SftpTransferManager expected.", SftpTransferManager.class, transferManager.getClass());
 		
 		return transferManager;

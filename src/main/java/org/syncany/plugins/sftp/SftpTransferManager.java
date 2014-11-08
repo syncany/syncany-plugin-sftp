@@ -59,7 +59,7 @@ import com.jcraft.jsch.UserInfo;
 
 /**
  * Implements a {@link TransferManager} based on an SFTP storage backend for the
- * {@link SftpPlugin}.
+ * {@link SftpTransferPlugin}.
  *
  * <p>Using an {@link SftpTransferSettings}, the transfer manager is configured and uses
  * a well defined SFTP folder to store the Syncany repository data. While repo and
@@ -107,9 +107,8 @@ public class SftpTransferManager extends AbstractTransferManager {
 		initKnownHosts();
 	}
 
-	@Override
 	public SftpTransferSettings getSettings() {
-		return (SftpTransferSettings) super.getSettings();
+		return (SftpTransferSettings) settings;
 	}
 
 	@Override

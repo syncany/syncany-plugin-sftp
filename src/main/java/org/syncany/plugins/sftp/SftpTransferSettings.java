@@ -18,31 +18,47 @@
 package org.syncany.plugins.sftp;
 
 import java.io.File;
-import java.util.Map;
 
-import org.syncany.plugins.PluginOptionSpec;
-import org.syncany.plugins.PluginOptionSpec.ValueType;
-import org.syncany.plugins.PluginOptionSpecs;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.core.Validate;
+import org.syncany.plugins.transfer.Encrypted;
+import org.syncany.plugins.transfer.Setup;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferSettings;
 
 /**
  * The SFTP connection represents the settings required to connect to an
  * SFTP-based storage backend. It can be used to initialize/create an
- * {@link SftpTransferManager} and is part of the {@link SftpPlugin}.
+ * {@link SftpTransferManager} and is part of the {@link SftpTransferPlugin}.
  *
  * @author Vincent Wiencek <vwiencek@gmail.com>
  * @author Christian Roth <christian.roth@port17.de>
  */
 public class SftpTransferSettings extends TransferSettings {
-	private static final String NO_KEY = "none";
-
+	@Element(name = "hostname", required = true)
+	@Setup(order = 1, description = "Hostname")
 	private String hostname;
+
+	@Element(name = "username", required = true)
+	@Setup(order = 2, description = "Username")
 	private String username;
+
+	@Element(name = "password", required = true)
+	@Setup(order = 3, sensitive = true, description = "Password")
+	@Encrypted
 	private String password;
+
+	@Element(name = "privateKey", required = false)
+	@Setup(order = 4, description = "Private Key")
 	private File privateKey;
+
+	@Element(name = "path", required = true)
+	@Setup(order = 5, description = "Path")
 	private String path;
-	private int port;
+
+	@Element(name = "port", required = false)
+	@Setup(order = 6, description = "Port")
+	private int port = 22;
 
 	public String getHostname() {
 		return hostname;
@@ -92,34 +108,13 @@ public class SftpTransferSettings extends TransferSettings {
 		this.privateKey = privateKey;
 	}
 
-	@Override
-	public void init(Map<String, String> optionValues) throws StorageException {
-		getOptionSpecs().validate(optionValues);
-		this.hostname = optionValues.get("hostname");
-		this.username = optionValues.get("username");
-		this.password = optionValues.get("password");
-		this.path = optionValues.get("path");
-		this.port = Integer.parseInt(optionValues.get("port"));
-
-		if (optionValues.get("privatekey") != null && !NO_KEY.equalsIgnoreCase(optionValues.get("privatekey"))) {
-			this.privateKey = new File(optionValues.get("privatekey"));
-			
-			if (!this.privateKey.isFile() || !this.privateKey.canRead()) {
-				throw new StorageException("Not a valid privatekey");
+	@Validate
+	public void validate() throws StorageException {
+		if (privateKey != null) {
+			if (!privateKey.isFile() || !privateKey.canRead()) {
+				throw new StorageException("Not a valid privatekey file at " + privateKey);
 			}
 		}
-	}
-
-	@Override
-	public PluginOptionSpecs getOptionSpecs() {
-		return new PluginOptionSpecs(
-			new PluginOptionSpec("hostname", "Hostname", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("username", "Username", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("privatekey", "Private key path", ValueType.STRING, false, false, NO_KEY),
-			new PluginOptionSpec("password", "Password", ValueType.STRING, true, true, null),
-			new PluginOptionSpec("path", "Path", ValueType.STRING, true, false, null),
-			new PluginOptionSpec("port", "Port", ValueType.INT, false, false, "22")
-		);
 	}
 
 	@Override

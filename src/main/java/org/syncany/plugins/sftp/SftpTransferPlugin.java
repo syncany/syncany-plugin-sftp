@@ -17,14 +17,10 @@
  */
 package org.syncany.plugins.sftp;
 
-import org.syncany.config.Config;
-import org.syncany.plugins.Plugin;
-import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
-import org.syncany.plugins.transfer.TransferSettings;
 
 /**
- * Identifies the SFTP-based storage {@link Plugin} for Syncany. 
+ * Identifies the SFTP-based storage {@link TransferPlugin} for Syncany. 
  * 
  * <p>This class defines the identifier, name and 
  * version of the plugin. It furthermore allows the instantiation 
@@ -32,18 +28,8 @@ import org.syncany.plugins.transfer.TransferSettings;
  * 
  * @author Vincent Wiencek <vwiencek@gmail.com>
  */
-public class SftpPlugin extends TransferPlugin {
-	public SftpPlugin() {
+public class SftpTransferPlugin extends TransferPlugin {
+	public SftpTransferPlugin() {
 		super("sftp");
-	}
-
-    @Override
-    public TransferManager createTransferManager(TransferSettings connection, Config config) {
-        return new SftpTransferManager((SftpTransferSettings) connection, config);
-    }
-    
-	@Override
-	public TransferSettings createSettings() {
-		return new SftpTransferSettings();
 	}
 }
