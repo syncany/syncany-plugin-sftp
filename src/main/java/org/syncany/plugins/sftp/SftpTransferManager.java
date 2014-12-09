@@ -40,6 +40,7 @@ import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.StorageMoveException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.files.ActionRemoteFile;
+import org.syncany.plugins.transfer.files.CleanupRemoteFile;
 import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
 import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
 import org.syncany.plugins.transfer.files.RemoteFile;
@@ -124,12 +125,12 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 			// Use pubkey authentication?
 			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null;
-			
+
 			if (usePublicKeyAuth) {
 				if (logger.isLoggable(Level.INFO)) {
 					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getSettings().getPrivateKey().getAbsolutePath());
 				}
-				
+
 				secureChannel.addIdentity(getSettings().getPrivateKey().getAbsolutePath(), getSettings().getPassword());
 			}
 
@@ -163,12 +164,12 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	@Override
 	public void disconnect() {
-		if (sftpChannel != null){
+		if (sftpChannel != null) {
 			sftpChannel.quit();
 			sftpChannel.disconnect();
 		}
 
-		if (secureSession != null){
+		if (secureSession != null) {
 			secureSession.disconnect();
 		}
 	}
@@ -200,7 +201,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 		String remotePath = getRemoteFile(remoteFile);
 
-		if (!remoteFile.getName().equals(".") && !remoteFile.getName().equals("..")){
+		if (!remoteFile.getName().equals(".") && !remoteFile.getName().equals("..")) {
 			try {
 				// Download file
 				File tempFile = createTempFile(localFile.getName());
@@ -280,7 +281,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			throw new StorageException(ex);
 		}
 	}
-	
+
 	@Override
 	public void move(RemoteFile sourceFile, RemoteFile targetFile) throws StorageException {
 		connect();
@@ -316,7 +317,8 @@ public class SftpTransferManager extends AbstractTransferManager {
 					remoteFiles.put(entry.getFilename(), remoteFile);
 				}
 				catch (Exception e) {
-					logger.log(Level.INFO, "Cannot create instance of " + remoteFileClass.getSimpleName() + " for file " + entry.getFilename() + "; maybe invalid file name pattern. Ignoring file.");
+					logger.log(Level.INFO, "Cannot create instance of " + remoteFileClass.getSimpleName() + " for file " + entry.getFilename()
+							+ "; maybe invalid file name pattern. Ignoring file.");
 				}
 			}
 
@@ -338,7 +340,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		if (remoteFile.equals(MultichunkRemoteFile.class)) {
 			return multichunksPath;
 		}
-		else if (remoteFile.equals(DatabaseRemoteFile.class)) {
+		else if (remoteFile.equals(DatabaseRemoteFile.class) || remoteFile.equals(CleanupRemoteFile.class)) {
 			return databasesPath;
 		}
 		else if (remoteFile.equals(ActionRemoteFile.class)) {
@@ -355,17 +357,17 @@ public class SftpTransferManager extends AbstractTransferManager {
 		}
 	}
 
-	private List<LsEntry> listEntries(String absolutePath) throws SftpException{
+	private List<LsEntry> listEntries(String absolutePath) throws SftpException {
 		final List<LsEntry> result = new ArrayList<>();
-		
+
 		LsEntrySelector selector = new LsEntrySelector() {
 			public int select(LsEntry entry) {
 				if (!entry.getFilename().equals(".")
 						&& !entry.getFilename().equals("..")) {
-					
+
 					result.add(entry);
 				}
-				
+
 				return CONTINUE;
 			}
 		};
@@ -406,20 +408,20 @@ public class SftpTransferManager extends AbstractTransferManager {
 	public boolean testTargetExists() {
 		try {
 			SftpATTRS attrs = sftpChannel.stat(repoPath);
-		    boolean targetExists = attrs.isDir();
+			boolean targetExists = attrs.isDir();
 
-		    if (targetExists) {
-		    	logger.log(Level.INFO, "testTargetExists: Target does exist.");
+			if (targetExists) {
+				logger.log(Level.INFO, "testTargetExists: Target does exist.");
 				return true;
-		    }
-		    else {
-		    	logger.log(Level.INFO, "testTargetExists: Target does NOT exist.");
+			}
+			else {
+				logger.log(Level.INFO, "testTargetExists: Target does NOT exist.");
 				return false;
-		    }
+			}
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "testTargetExists: Target does NOT exist, error occurred.", e);
-		    return false;
+			return false;
 		}
 	}
 

@@ -10,7 +10,7 @@ Package: syncany-plugin-sftp
 Architecture: ${pluginDebianArchitecture}
 Depends: ${pluginMiscDepends}, syncany (>= ${pluginAppMinVersion})
 Homepage: https://www.syncany.org/
-Description: FTP plugin for Syncany
+Description: SFTP plugin for Syncany
  This plugin makes it possible to use an SFTP folder as a backend 
  for Syncany. 
  .
