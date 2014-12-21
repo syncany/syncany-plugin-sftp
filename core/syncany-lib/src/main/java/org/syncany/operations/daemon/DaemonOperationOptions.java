@@ -15,12 +15,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.syncany.crypto.specs;
+package org.syncany.operations.daemon;
 
-import org.syncany.crypto.CipherSpecs;
+import org.syncany.operations.OperationOptions;
 
-public class TwofishGcm128CipherSpec extends TwofishGcmCipherSpec {
-	public TwofishGcm128CipherSpec() {
-		super(CipherSpecs.TWOFISH_128_GCM, "Twofish/GCM/NoPadding", 128, 128, false);
+public class DaemonOperationOptions implements OperationOptions {
+	public enum DaemonAction {
+		RUN, LIST, ADD, REMOVE
+	}
+	
+	private DaemonAction action = null;
+	private String watchRoot = null;
+	
+	public DaemonOperationOptions() {
+		// Nothing
+	}
+	
+	public DaemonOperationOptions(DaemonAction action) {
+		this.action = action;
+	}
+	
+	public DaemonAction getAction() {
+		return action;
+	}
+	
+	public void setAction(DaemonAction action) {
+		this.action = action;
+	}
+	
+	public String getWatchRoot() {
+		return watchRoot;
+	}
+	
+	public void setWatchRoot(String watchRoot) {
+		this.watchRoot = watchRoot;
 	}
 }
