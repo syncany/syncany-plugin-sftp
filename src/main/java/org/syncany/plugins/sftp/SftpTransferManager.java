@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.syncany.config.Config;
+import org.syncany.config.LocalEventBus;
 import org.syncany.config.UserConfig;
 import org.syncany.plugins.UserInteractionListener;
 import org.syncany.plugins.transfer.AbstractTransferManager;
@@ -494,9 +495,11 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	private class SftpUserInfo implements UserInfo {
 		private UserInteractionListener userInteractionListener;
+		private LocalEventBus eventBus;
 
 		public SftpUserInfo() {
 			this.userInteractionListener = getSettings().getUserInteractionListener();
+			this.eventBus = LocalEventBus.getInstance();
 		}
 
 		@Override
@@ -528,7 +531,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 		@Override
 		public void showMessage(String message) {
-			userInteractionListener.onShowMessage(message);
+			eventBus.post(message);
 		}
 	}
 }
