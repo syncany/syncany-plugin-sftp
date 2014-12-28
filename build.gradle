@@ -8,17 +8,10 @@ configurations {
 project.ext {
 	pluginId = "sftp"
 	pluginName = "SFTP"
-<<<<<<< HEAD
-	pluginVersion = "0.4.0-alpha"
+	pluginVersion = "0.4.1-alpha"
 	pluginDebianVersion = "1"
 	pluginDate = new Date()
 	pluginAppMinVersion = "0.4.0-alpha"
-=======
-	pluginVersion = "0.3.1-alpha"
-	pluginDebianVersion = "1"
-	pluginDate = new Date()
-	pluginAppMinVersion = "0.3.1-alpha"
->>>>>>> feature/issue297-wizard
 	pluginRelease = rootProject.ext.applicationRelease
 	pluginConflictsWith = ""
 
