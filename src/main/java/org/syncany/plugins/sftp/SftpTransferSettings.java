@@ -22,6 +22,7 @@ import java.io.File;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Validate;
 import org.syncany.plugins.transfer.Encrypted;
+import org.syncany.plugins.transfer.FileType;
 import org.syncany.plugins.transfer.Setup;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferSettings;
@@ -49,7 +50,7 @@ public class SftpTransferSettings extends TransferSettings {
 	private String password;
 
 	@Element(name = "privateKey", required = false)
-	@Setup(order = 4, description = "Private Key")
+	@Setup(order = 4, fileType = FileType.FILE, description = "Private Key")
 	private File privateKey;
 
 	@Element(name = "path", required = true)
