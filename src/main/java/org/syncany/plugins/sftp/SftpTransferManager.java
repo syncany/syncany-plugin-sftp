@@ -277,9 +277,14 @@ public class SftpTransferManager extends AbstractTransferManager {
 			return true;
 		}
 		catch (SftpException ex) {
-			disconnect();
-			logger.log(Level.SEVERE, "Could not delete file " + remoteFile.getName(), ex);
-			throw new StorageException(ex);
+			if (ex.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+				return true;
+			}
+			else {
+				disconnect();
+				logger.log(Level.SEVERE, "Could not delete file " + remoteFile.getName(), ex);
+				throw new StorageException(ex);
+			}
 		}
 	}
 
