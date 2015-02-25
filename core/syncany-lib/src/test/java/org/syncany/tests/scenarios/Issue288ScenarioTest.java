@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,6 @@ public class Issue288ScenarioTest {
 		java.sql.Connection databaseConnectionB = DatabaseConnectionFactory.createConnection(clientB.getDatabaseFile());
 		
 		CleanupOperationOptions cleanupOptionsKeepOne = new CleanupOperationOptions();
-		cleanupOptionsKeepOne.setKeepVersionsCount(1);
 		cleanupOptionsKeepOne.setForce(true);
 		
 		// Create file content with two duplicate chunks

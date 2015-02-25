@@ -1,6 +1,9 @@
 Change Log
 ==========
 
+### Syncany SFTP Plugin 0.4.3-alpha (Date: 25 Feb 2015)
+- Minor bugfix with `delete()` #383
+
 ### Syncany SFTP Plugin 0.3.0-alpha (Date: 9 Dec 2014)
 - Update to new core code
 
