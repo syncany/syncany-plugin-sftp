@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,17 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.TreeMap;
 
 import org.junit.Test;
 import org.syncany.config.Logging;
 import org.syncany.database.DatabaseConnectionFactory;
 import org.syncany.operations.cleanup.CleanupOperationOptions;
+import org.syncany.operations.cleanup.CleanupOperationOptions.TimeUnit;
 import org.syncany.operations.cleanup.CleanupOperationResult;
 import org.syncany.operations.cleanup.CleanupOperationResult.CleanupResultCode;
 import org.syncany.operations.down.DownOperationResult;
@@ -57,7 +62,7 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setRemoveOldVersions(true);
-		options.setKeepVersionsCount(2);
+		options.setMinKeepSeconds(0);
 
 		// Run
 
@@ -105,25 +110,25 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientA.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(11, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(5, cleanupOperationResult.getRemovedMultiChunks().size());
-		assertEquals(3, cleanupOperationResult.getRemovedOldVersionsCount());
+		assertEquals(7, cleanupOperationResult.getRemovedMultiChunksCount());
+		assertEquals(4, cleanupOperationResult.getRemovedOldVersionsCount());
 
-		// 2 versions for "file.jpg", 2 versions for "otherfile.txt" and one version for "someotherfile.jpg"
-		assertEquals("5", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
-		assertEquals("7", TestSqlUtil.runSqlSelect("select sum(version) from fileversion where path='file.jpg'", databaseConnectionA)); // 3+4
-		assertEquals("5", TestSqlUtil.runSqlSelect("select sum(version) from fileversion where path='otherfile.txt'", databaseConnectionA)); // 2+3
+		// 1 version for "file.jpg", 1 versions for "otherfile.txt" and 1 version for "someotherfile.jpg"
+		assertEquals("3", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
+		assertEquals("4", TestSqlUtil.runSqlSelect("select sum(version) from fileversion where path='file.jpg'", databaseConnectionA)); // 4
+		assertEquals("3", TestSqlUtil.runSqlSelect("select sum(version) from fileversion where path='otherfile.txt'", databaseConnectionA)); // 3
 		assertEquals("1", TestSqlUtil.runSqlSelect("select sum(version) from fileversion where path='someotherfile.jpg'", databaseConnectionA));
 
-		// 5 chunks remain; one was obsolete so we removed it!
-		assertEquals("5", TestSqlUtil.runSqlSelect("select count(*) from chunk", databaseConnectionA));
+		// 3 chunks remain; one was obsolete so we removed it!
+		assertEquals("3", TestSqlUtil.runSqlSelect("select count(*) from chunk", databaseConnectionA));
 
-		// 6 chunks in 5 multichunks
-		assertEquals("5", TestSqlUtil.runSqlSelect("select count(*) from multichunk", databaseConnectionA));
-		assertEquals("5", TestSqlUtil.runSqlSelect("select count(*) from filecontent", databaseConnectionA));
+		// 3 chunks in 3 multichunks
+		assertEquals("3", TestSqlUtil.runSqlSelect("select count(*) from multichunk", databaseConnectionA));
+		assertEquals("3", TestSqlUtil.runSqlSelect("select count(*) from filecontent", databaseConnectionA));
 		assertEquals("3", TestSqlUtil.runSqlSelect("select count(distinct id) from filehistory", databaseConnectionA));
 
 		// Test the repo
-		assertEquals(5, new File(testConnection.getPath() + "/multichunks/").list().length);
+		assertEquals(3, new File(testConnection.getPath() + "/multichunks/").list().length);
 		assertEquals(1, new File(testConnection.getPath() + "/databases/").list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return name.startsWith("database-");
@@ -152,7 +157,6 @@ public class CleanupOperationTest {
 		CleanupOperationOptions cleanupOptions = new CleanupOperationOptions();
 		cleanupOptions.setStatusOptions(statusOptions);
 		cleanupOptions.setRemoveOldVersions(true);
-		cleanupOptions.setKeepVersionsCount(2);
 
 		// Run
 
@@ -171,7 +175,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientB.cleanup(cleanupOptions);
 		assertEquals(CleanupResultCode.NOK_LOCAL_CHANGES, cleanupOperationResult.getResultCode());
 		assertEquals(0, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -188,7 +192,6 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setRemoveOldVersions(true);
-		options.setKeepVersionsCount(2);
 
 		// Run
 
@@ -210,7 +213,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientB.cleanup(options);
 		assertEquals(CleanupResultCode.NOK_REMOTE_CHANGES, cleanupOperationResult.getResultCode());
 		assertEquals(0, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -227,7 +230,7 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setRemoveOldVersions(true);
-		options.setKeepVersionsCount(10); // <<<<<< Different!
+		options.setPurgeFileVersionSettings(new TreeMap<Long, TimeUnit>());
 
 		// Run
 
@@ -245,7 +248,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientB.cleanup(options);
 		assertEquals(CleanupResultCode.OK_NOTHING_DONE, cleanupOperationResult.getResultCode());
 		assertEquals(0, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -262,7 +265,7 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setRemoveOldVersions(true);
-		options.setKeepVersionsCount(2);
+		options.setMinKeepSeconds(0);
 
 		// Run
 
@@ -280,7 +283,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientA.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(4, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(2, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(3, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(1, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// A: Continue to upload stuff ! <<<<<<<<<<<<<<<<<<<<<
@@ -313,7 +316,6 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions removeOldCleanupOperationOptions = new CleanupOperationOptions();
 		removeOldCleanupOperationOptions.setRemoveOldVersions(true);
-		removeOldCleanupOperationOptions.setKeepVersionsCount(2);
 
 		StatusOperationOptions forceChecksumStatusOperationOptions = new StatusOperationOptions();
 		forceChecksumStatusOperationOptions.setForceChecksum(true);
@@ -349,7 +351,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientB.cleanup(removeOldCleanupOperationOptions);
 		assertEquals(CleanupResultCode.NOK_DIRTY_LOCAL, cleanupOperationResult.getResultCode());
 		assertEquals(0, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -421,7 +423,7 @@ public class CleanupOperationTest {
 		// 6. Call 'cleanup' manually (Nothing happens, since transaction was cleaned on second up)
 		CleanupOperationResult cleanupOperationResult = clientA.cleanup();
 		assertEquals(CleanupOperationResult.CleanupResultCode.OK_NOTHING_DONE, cleanupOperationResult.getResultCode());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, repoActionsDir.listFiles().length);
 
 		// Tear down
@@ -437,8 +439,8 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setMinSecondsBetweenCleanups(0);
+		options.setPurgeFileVersionSettings(new TreeMap<Long, TimeUnit>());
 		options.setRemoveOldVersions(true);
-		options.setKeepVersionsCount(10);
 		options.setMaxDatabaseFiles(3);
 
 		// Run
@@ -454,7 +456,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientA.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(4, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		TestClient clientB = new TestClient("B", testConnection);
@@ -471,7 +473,7 @@ public class CleanupOperationTest {
 		cleanupOperationResult = clientB.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(7, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -487,6 +489,7 @@ public class CleanupOperationTest {
 
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setRemoveOldVersions(false);
+		options.setRemoveVersionsByInterval(false);
 		options.setMinSecondsBetweenCleanups(40000000);
 
 		// Run
@@ -502,7 +505,7 @@ public class CleanupOperationTest {
 		CleanupOperationResult cleanupOperationResult = clientA.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(16, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		for (int i = 1; i <= 15; i++) {
@@ -520,7 +523,7 @@ public class CleanupOperationTest {
 		cleanupOperationResult = clientA.cleanup(options);
 		assertEquals(CleanupResultCode.OK, cleanupOperationResult.getResultCode());
 		assertEquals(16, cleanupOperationResult.getMergedDatabaseFilesCount());
-		assertEquals(0, cleanupOperationResult.getRemovedMultiChunks().size());
+		assertEquals(0, cleanupOperationResult.getRemovedMultiChunksCount());
 		assertEquals(0, cleanupOperationResult.getRemovedOldVersionsCount());
 
 		// Tear down
@@ -546,6 +549,7 @@ public class CleanupOperationTest {
 		CleanupOperationOptions options = new CleanupOperationOptions();
 		options.setStatusOptions(forceChecksumStatusOperationOptions);
 		options.setRemoveOldVersions(true);
+		options.setMinKeepSeconds(0);
 		options.setMinSecondsBetweenCleanups(40000000);
 		options.setForce(true);
 
@@ -597,7 +601,7 @@ public class CleanupOperationTest {
 				return name.startsWith("database-");
 			}
 		}).length);
-		assertEquals(5, repoMultiChunkDir.listFiles().length);
+		assertEquals(1, repoMultiChunkDir.listFiles().length);
 		assertEquals(0, repoActionsDir.listFiles().length);
 		assertEquals(0, repoDir.list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -609,7 +613,132 @@ public class CleanupOperationTest {
 				return name.startsWith("temp-");
 			}
 		}).length);
-		assertEquals("5", TestSqlUtil.runSqlSelect("select count(*) from multichunk", databaseConnectionA));
+		assertEquals("1", TestSqlUtil.runSqlSelect("select count(*) from multichunk", databaseConnectionA));
+
+		// Tear down
+		clientA.deleteTestData();
+	}
+	
+	@Test
+	public void testFullyDeletingDeletedFiles() throws Exception {
+		// Setup
+		LocalTransferSettings testConnection = (LocalTransferSettings) TestConfigUtil.createTestLocalConnection();
+		TestClient clientA = new TestClient("A", testConnection);
+		java.sql.Connection databaseConnectionA = clientA.getConfig().createDatabaseConnection();
+
+		CleanupOperationOptions options = new CleanupOperationOptions();
+		options.setRemoveOldVersions(true);
+		options.setMinSecondsBetweenCleanups(0);
+		options.setPurgeFileVersionSettings(new TreeMap<Long, TimeUnit>());
+		options.setMinKeepSeconds(2);
+		
+		clientA.createNewFile("file.jpg");
+		clientA.up();
+		clientA.deleteFile("file.jpg");
+		clientA.up();
+		clientA.cleanup(options);
+		assertEquals("2", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
+
+		Thread.sleep(3000);
+
+		clientA.cleanup(options);
+		assertEquals("0", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
+
+		// Tear down
+		clientA.deleteTestData();
+	}
+
+	@Test
+	public void testDefaultFileVersionDeletion() throws Exception {
+		// Setup
+		LocalTransferSettings testConnection = (LocalTransferSettings) TestConfigUtil.createTestLocalConnection();
+		TestClient clientA = new TestClient("A", testConnection);
+		java.sql.Connection databaseConnectionA = clientA.getConfig().createDatabaseConnection();
+
+		CleanupOperationOptions options = new CleanupOperationOptions();
+		options.setRemoveOldVersions(true);
+		options.setMinSecondsBetweenCleanups(0);
+
+		// More than a month back
+		clientA.createNewFile("file.jpg", 1024);
+		clientA.upWithForceChecksum();
+		// Less than a month back
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();		
+		// Less than a month back, same day as above
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+		
+		// Less than 3 days back
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+		// Less than 3 days back, same hour as above
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+		
+		// Less than 1 hour back
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+		// Less than 1 hour back, same minute
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+
+		long curTime = System.currentTimeMillis() / 1000L;
+		
+		long[] times = new long[]{curTime - 31L*24L*3600L, 
+				curTime - 20L * 24L * 3600L - 1L, curTime - 20L * 24L * 3600L,
+				curTime - 24 * 3600L - 1L, curTime - 24L * 3600L,
+				curTime - 500L, curTime - 499L
+		};
+
+		int i = 0;
+		try (PreparedStatement preparedStatement = databaseConnectionA.prepareStatement("select * from fileversion")) {
+			ResultSet res = preparedStatement.executeQuery();
+			while (res.next()) {
+				int version = res.getInt("version");
+				try (PreparedStatement preparedUpdate = databaseConnectionA.prepareStatement("update fileversion set updated = ? where version = ?")) {
+					System.out.println(new Timestamp(times[i] * 1000L));
+					preparedUpdate.setTimestamp(1, new Timestamp(times[i] * 1000L));
+					preparedUpdate.setInt(2, version);
+					assertEquals(1, preparedUpdate.executeUpdate());
+				}
+				i++;
+			}
+		}
+
+		databaseConnectionA.commit();
+		assertEquals("7", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
+
+		clientA.cleanup(options);
+		assertEquals("3", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
+		assertEquals("3\n5\n7", TestSqlUtil.runSqlSelect("select version from fileversion", databaseConnectionA));
+
+		// Tear down
+		clientA.deleteTestData();
+	}
+
+	@Test
+	public void testFullFileVersionDeletion() throws Exception {
+		// Setup
+		LocalTransferSettings testConnection = (LocalTransferSettings) TestConfigUtil.createTestLocalConnection();
+		TestClient clientA = new TestClient("A", testConnection);
+		java.sql.Connection databaseConnectionA = clientA.getConfig().createDatabaseConnection();
+
+		CleanupOperationOptions options = new CleanupOperationOptions();
+		options.setRemoveOldVersions(true);
+		options.setPurgeFileVersionSettings(new TreeMap<Long, TimeUnit>());
+		options.setMinKeepSeconds(0);
+		options.setMinSecondsBetweenCleanups(0);
+
+		// More than a month back
+		clientA.createNewFile("file.jpg", 1024);
+		clientA.upWithForceChecksum();
+		// Less than a month back
+		clientA.changeFile("file.jpg");
+		clientA.upWithForceChecksum();
+
+		clientA.cleanup(options);
+		assertEquals("1", TestSqlUtil.runSqlSelect("select count(*) from fileversion", databaseConnectionA));
 
 		// Tear down
 		clientA.deleteTestData();

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ public class ChangedAttributesScenarioTest {
 		// Test 2: Check database for inconsistencies
 		SqlDatabase database = clientB.loadLocalDatabase();
 
-		assertNotNull("File should be uploaded.", database.getFileVersionByPath("file1.jpg"));		
+		assertEquals("File should be uploaded.", 1, database.getFileList("file1.jpg", null, false, false, false, null).size());		
 		assertEquals("There should be a new database version, because file should not have been added.", 2, database.getLocalDatabaseBranch().size());
 		
 		// B down

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ public class SymlinkSyncScenarioTest {
 		// Test 2: Check database for inconsistencies
 		SqlDatabase database = clientA.loadLocalDatabase();
 
-		assertNotNull("File should be uploaded.", database.getFileVersionByPath("symlink-name"));
+		assertEquals("File should be uploaded.", 1, database.getFileList("symlink-name", null, false, false, false, null).size());
 		assertNotNull("There should be a new database version, because file should not have been added.", database.getLastDatabaseVersionHeader());
 
 		// Test 3: Check file system for inconsistencies

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -144,7 +144,7 @@ public class FileLockedScenarioTest {
 		// Test 2: Check database for inconsistencies
 		SqlDatabase database = client.loadLocalDatabase();
 
-		assertNull("File should NOT be uploaded while it is locked.", database.getFileVersionByPath("large-test-file"));
+		assertEquals("File should NOT be uploaded while it is locked.", 0, database.getFileList("large-test-file", null, false, false, false, null).size());
 		assertNull("There should NOT be a new database version, because file should not have been added.", database.getLastDatabaseVersionHeader());
 
 		// Test 3: Check file system for inconsistencies
