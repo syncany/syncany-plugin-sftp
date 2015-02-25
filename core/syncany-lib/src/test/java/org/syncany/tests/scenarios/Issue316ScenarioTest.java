@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,6 @@ public class Issue316ScenarioTest {
 		java.sql.Connection databaseConnectionB = clientB.getConfig().createDatabaseConnection();
 				
 		CleanupOperationOptions cleanupOptionsKeepOne = new CleanupOperationOptions();
-		cleanupOptionsKeepOne.setKeepVersionsCount(1);
 		cleanupOptionsKeepOne.setMaxDatabaseFiles(1);
 		cleanupOptionsKeepOne.setForce(true);	
 				
@@ -126,7 +125,6 @@ public class Issue316ScenarioTest {
 		TestClient clientB = new TestClient("B", testConnection);
 				
 		CleanupOperationOptions cleanupOptionsKeepOne = new CleanupOperationOptions();
-		cleanupOptionsKeepOne.setKeepVersionsCount(1);
 		cleanupOptionsKeepOne.setMaxDatabaseFiles(1);
 		cleanupOptionsKeepOne.setForce(true);	
 				
