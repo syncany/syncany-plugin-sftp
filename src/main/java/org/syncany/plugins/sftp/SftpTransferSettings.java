@@ -46,7 +46,7 @@ public class SftpTransferSettings extends TransferSettings {
 	private String username;
 
 	@Element(name = "privateKey", required = false)
-	@Setup(order = 3, fileType = FileType.FILE, description = "Private Key (Leave empty if you want to use password based authentication)")
+	@Setup(order = 3, fileType = FileType.FILE, description = "Private Key (Leave empty if a password will be used)")
 	private File privateKey;
 
 	@Element(name = "password", required = false)
