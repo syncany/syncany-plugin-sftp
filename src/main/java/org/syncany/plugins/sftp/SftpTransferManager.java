@@ -83,6 +83,7 @@ import com.jcraft.jsch.UserInfo;
  */
 public class SftpTransferManager extends AbstractTransferManager {
 	private static final Logger logger = Logger.getLogger(SftpTransferManager.class.getSimpleName());
+	private static final String SUPPORTED_KEX = "diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1,diffie-hellman-group-exchange-sha256";
 
 	private JSch secureChannel;
 	private Session secureSession;
@@ -97,6 +98,11 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 	public SftpTransferManager(SftpTransferSettings connection, Config config) {
 		super(connection, config);
+
+		// Activate more kex
+		// see http://sourceforge.net/p/jsch/patches/7/
+		// see https://github.com/syncany/syncany/issues/385
+		JSch.setConfig("kex", SUPPORTED_KEX);
 
 		this.secureChannel = new JSch();
 		this.repoPath = connection.getPath();
