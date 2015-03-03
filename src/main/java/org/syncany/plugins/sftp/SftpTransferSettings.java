@@ -50,7 +50,7 @@ public class SftpTransferSettings extends TransferSettings {
 	private File privateKey;
 
 	@Element(name = "password", required = false)
-	@Setup(order = 4, sensitive = true, description = "Password (If a keyfile is provided, the password is assumed to be the private keys' password)")
+	@Setup(order = 4, sensitive = true, description = "Password (If a keyfile is provided, the password is assumed to be the private key's password)")
 	@Encrypted
 	private String password;
 
