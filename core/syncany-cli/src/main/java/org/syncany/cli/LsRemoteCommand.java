@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import java.util.List;
 import org.syncany.operations.OperationOptions;
 import org.syncany.operations.OperationResult;
 import org.syncany.operations.daemon.messages.LsRemoteStartSyncExternalEvent;
+import org.syncany.operations.ls_remote.LsRemoteOperation;
 import org.syncany.operations.ls_remote.LsRemoteOperationResult;
 import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
 import org.syncany.plugins.transfer.files.RemoteFile;
@@ -41,7 +42,7 @@ public class LsRemoteCommand extends Command {
 	
 	@Override
 	public int execute(String[] operationArgs) throws Exception {
-		LsRemoteOperationResult operationResult = client.lsRemote();
+		LsRemoteOperationResult operationResult = new LsRemoteOperation(config).execute();
 		printResults(operationResult);		
 		
 		return 0;

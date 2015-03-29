@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import joptsimple.OptionSpec;
 
 import org.syncany.config.to.ConfigTO;
 import org.syncany.operations.OperationResult;
+import org.syncany.operations.init.ConnectOperation;
 import org.syncany.operations.init.ConnectOperationOptions;
 import org.syncany.operations.init.ConnectOperationOptions.ConnectOptionsStrategy;
 import org.syncany.operations.init.ConnectOperationResult;
@@ -57,7 +58,7 @@ public class ConnectCommand extends AbstractInitCommand {
 		ConnectOperationOptions operationOptions = parseOptions(operationArgs);
 
 		while (retryNeeded && performOperation) {
-			ConnectOperationResult operationResult = client.connect(operationOptions, this);
+			ConnectOperationResult operationResult = new ConnectOperation(operationOptions, this).execute();
 			printResults(operationResult);
 
 			retryNeeded = operationResult.getResultCode() != ConnectResultCode.OK

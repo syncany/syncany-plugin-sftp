@@ -22,9 +22,11 @@ import java.io.File;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Validate;
 import org.syncany.plugins.transfer.Encrypted;
+import org.syncany.plugins.transfer.FileType;
 import org.syncany.plugins.transfer.Setup;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferSettings;
+import com.google.common.base.Objects;
 
 /**
  * The SFTP connection represents the settings required to connect to an
@@ -43,14 +45,14 @@ public class SftpTransferSettings extends TransferSettings {
 	@Setup(order = 2, description = "Username")
 	private String username;
 
-	@Element(name = "password", required = true)
-	@Setup(order = 3, sensitive = true, description = "Password")
+	@Element(name = "privateKey", required = false)
+	@Setup(order = 3, fileType = FileType.FILE, description = "Private Key (Leave empty if a password will be used)")
+	private File privateKey;
+
+	@Element(name = "password", required = false)
+	@Setup(order = 4, sensitive = true, description = "Password (If a keyfile is provided, the password is assumed to be the private key's password)")
 	@Encrypted
 	private String password;
-
-	@Element(name = "privateKey", required = false)
-	@Setup(order = 4, description = "Private Key")
-	private File privateKey;
 
 	@Element(name = "path", required = true)
 	@Setup(order = 5, description = "Path")
@@ -109,7 +111,7 @@ public class SftpTransferSettings extends TransferSettings {
 	}
 
 	@Validate
-	public void validate() throws StorageException {
+	public void checkIfKeyfileExists() throws StorageException {
 		if (privateKey != null) {
 			if (!privateKey.isFile() || !privateKey.canRead()) {
 				throw new StorageException("Not a valid privatekey file at " + privateKey);
@@ -117,9 +119,21 @@ public class SftpTransferSettings extends TransferSettings {
 		}
 	}
 
+	@Validate
+	public void checkIfPasswordOrKeyfileProvided() throws StorageException {
+		if (password == null && privateKey == null) {
+			throw new StorageException("Neither password nor keyfile provided.");
+		}
+	}
+
 	@Override
 	public String toString() {
-		return SftpTransferSettings.class.getSimpleName()
-		+ "[hostname=" + hostname + ":" + port + ", username=" + username + ", path=" + path + "]";
+		return Objects.toStringHelper(this)
+						.add("hostname", hostname)
+						.add("port", port)
+						.add("username", username)
+						.add("authentication", privateKey != null ? privateKey.toString() + " " : "" + password != null ? "<PASSWORD>" : "")
+						.add("path", path)
+						.toString();
 	}
 }

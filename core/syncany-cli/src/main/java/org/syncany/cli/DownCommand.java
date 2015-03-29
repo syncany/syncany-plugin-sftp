@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import org.syncany.operations.ChangeSet;
 import org.syncany.operations.OperationResult;
 import org.syncany.operations.daemon.messages.DownDownloadFileSyncExternalEvent;
 import org.syncany.operations.daemon.messages.LsRemoteStartSyncExternalEvent;
+import org.syncany.operations.down.DownOperation;
 import org.syncany.operations.down.DownOperationOptions;
 import org.syncany.operations.down.DownOperationOptions.DownConflictStrategy;
 import org.syncany.operations.down.DownOperationResult;
@@ -52,7 +53,7 @@ public class DownCommand extends Command {
 	@Override
 	public int execute(String[] operationArgs) throws Exception {
 		DownOperationOptions operationOptions = parseOptions(operationArgs);		
-		DownOperationResult operationResult = client.down(operationOptions);		
+		DownOperationResult operationResult = new DownOperation(config, operationOptions).execute();		
 		
 		printResults(operationResult);
 		

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import org.syncany.operations.OperationResult;
+import org.syncany.operations.init.GenlinkOperation;
 import org.syncany.operations.init.GenlinkOperationOptions;
 import org.syncany.operations.init.GenlinkOperationResult;
 
@@ -42,7 +43,7 @@ public class GenlinkCommand extends AbstractInitCommand {
 	@Override
 	public int execute(String[] operationArgs) throws Exception {
 		GenlinkOperationOptions operationOptions = parseOptions(operationArgs);		
-		GenlinkOperationResult operationResult = client.genlink(operationOptions);		
+		GenlinkOperationResult operationResult = new GenlinkOperation(config, operationOptions).execute();		
 		
 		printResults(operationResult);
 		

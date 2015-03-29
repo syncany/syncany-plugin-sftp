@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ import org.syncany.crypto.CipherSpecs;
 import org.syncany.crypto.CipherUtil;
 import org.syncany.operations.OperationResult;
 import org.syncany.operations.init.GenlinkOperationOptions;
+import org.syncany.operations.init.InitOperation;
 import org.syncany.operations.init.InitOperationOptions;
 import org.syncany.operations.init.InitOperationResult;
 import org.syncany.operations.init.InitOperationResult.InitResultCode;
@@ -65,7 +66,7 @@ public class InitCommand extends AbstractInitCommand {
 		operationOptions = parseOptions(operationArgs);
 
 		while (retryNeeded && performOperation) {
-			InitOperationResult operationResult = client.init(operationOptions, this);
+			InitOperationResult operationResult = new InitOperation(operationOptions, this).execute();
 			printResults(operationResult);
 
 			retryNeeded = operationResult.getResultCode() != InitResultCode.OK;

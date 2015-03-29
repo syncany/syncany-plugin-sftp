@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ package org.syncany.cli;
 import java.io.File;
 import java.io.PrintStream;
 
-import org.syncany.Client;
 import org.syncany.cli.util.CarriageReturnPrinter;
+import org.syncany.config.Config;
 import org.syncany.config.LocalEventBus;
 import org.syncany.operations.OperationOptions;
 import org.syncany.operations.OperationResult;
@@ -47,7 +47,7 @@ import org.syncany.operations.OperationResult;
  * @author Philipp C. Heckel <philipp.heckel@gmail.com>
  */
 public abstract class Command {
-	protected Client client;
+	protected Config config;
 	protected File localDir;
 	protected CarriageReturnPrinter out;
 
@@ -112,8 +112,12 @@ public abstract class Command {
 		this.localDir = localDir;
 	}
 
-	public void setClient(Client client) {
-		this.client = client;
+	public Config getConfig() {
+		return config;
+	}
+
+	public void setConfig(Config config) {
+		this.config = config;
 	}
 
 	public void setOut(PrintStream out) {

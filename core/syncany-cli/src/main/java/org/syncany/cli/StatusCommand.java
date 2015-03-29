@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ import joptsimple.OptionSpec;
 
 import org.syncany.operations.OperationResult;
 import org.syncany.operations.daemon.messages.StatusStartSyncExternalEvent;
+import org.syncany.operations.status.StatusOperation;
 import org.syncany.operations.status.StatusOperationOptions;
 import org.syncany.operations.status.StatusOperationResult;
 
@@ -43,7 +44,7 @@ public class StatusCommand extends Command {
 	@Override
 	public int execute(String[] operationArgs) throws Exception {
 		StatusOperationOptions operationOptions = parseOptions(operationArgs);
-		StatusOperationResult operationResult = client.status(operationOptions);
+		StatusOperationResult operationResult = new StatusOperation(config, operationOptions).execute();
 		
 		printResults(operationResult);
 		
@@ -58,11 +59,15 @@ public class StatusCommand extends Command {
 		parser.allowsUnrecognizedOptions();
 		
 		OptionSpec<Void> optionForceChecksum = parser.acceptsAll(asList("f", "force-checksum"));
+		OptionSpec<Void> optionNoDeleteUpload = parser.acceptsAll(asList("D", "no-delete"));
 		
 		OptionSet options = parser.parse(operationArgs);	
 		
 		// --force-checksum
 		operationOptions.setForceChecksum(options.has(optionForceChecksum));
+		
+		// -D, --no-delete
+		operationOptions.setDelete(!options.has(optionNoDeleteUpload));
 		
 		return operationOptions;
 	}	

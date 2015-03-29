@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2014 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import joptsimple.OptionSpec;
 
 import org.syncany.database.PartialFileHistory.FileHistoryId;
 import org.syncany.operations.OperationResult;
+import org.syncany.operations.restore.RestoreOperation;
 import org.syncany.operations.restore.RestoreOperationOptions;
 import org.syncany.operations.restore.RestoreOperationResult;
 
@@ -47,7 +48,7 @@ public class RestoreCommand extends Command {
 	@Override
 	public int execute(String[] operationArgs) throws Exception {
 		RestoreOperationOptions operationOptions = parseOptions(operationArgs);
-		RestoreOperationResult operationResult = client.restore(operationOptions);
+		RestoreOperationResult operationResult = new RestoreOperation(config, operationOptions).execute();
 		
 		printResults(operationResult);
 		

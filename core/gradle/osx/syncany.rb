@@ -2,9 +2,9 @@ require "formula"
 
 class Syncany < Formula
   homepage "https://www.syncany.org"
-  url "https://codeload.github.com/syncany/syncany/tar.gz/v0.3.0-alpha"
-  sha256 "dce855dd218fc4d26389292c2cf055e5defdcb438d5f2a57b39a2dd2fd1cc378"
-  version "0.3.0-alpha"
+  url "https://codeload.github.com/syncany/syncany/tar.gz/v0.4.4-alpha"
+  sha256 "fd24b33c54dd1da3b1fcbc80e787a8b77b3e46880ed825403e2c31ca61f3ccc9"
+  version "0.4.4-alpha"
   head "https://github.com/syncany/syncany.git", :branch => "develop"
 
   depends_on :java => "1.7"
