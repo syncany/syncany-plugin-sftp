@@ -19,7 +19,8 @@ package org.syncany.operations.init;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.logging.Level;
 
 import org.syncany.config.Config;
@@ -30,13 +31,10 @@ import org.syncany.config.to.RepoTO;
 import org.syncany.crypto.CipherUtil;
 import org.syncany.crypto.SaltedSecretKey;
 import org.syncany.operations.init.InitOperationResult.InitResultCode;
-import org.syncany.plugins.Plugins;
 import org.syncany.plugins.UserInteractionListener;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.StorageTestResult;
 import org.syncany.plugins.transfer.TransferManager;
-import org.syncany.plugins.transfer.TransferPlugin;
-import org.syncany.plugins.transfer.TransferSettings;
 import org.syncany.plugins.transfer.files.MasterRemoteFile;
 import org.syncany.plugins.transfer.files.SyncanyRemoteFile;
 
@@ -58,10 +56,11 @@ import org.syncany.plugins.transfer.files.SyncanyRemoteFile;
  * @author Philipp C. Heckel <philipp.heckel@gmail.com>
  */
 public class InitOperation extends AbstractInitOperation {
-	private InitOperationOptions options;
-	private InitOperationResult result;
+	public static final String DEFAULT_IGNORE_FILE = "/" + InitOperation.class.getPackage().getName().replace('.', '/') + "/default.syignore";
 
-	private TransferPlugin plugin;
+	private final InitOperationOptions options;
+	private final InitOperationResult result;
+
 	private TransferManager transferManager;
 
 	public InitOperation(InitOperationOptions options, UserInteractionListener listener) {
@@ -77,13 +76,7 @@ public class InitOperation extends AbstractInitOperation {
 		logger.log(Level.INFO, "Running 'Init'");
 		logger.log(Level.INFO, "--------------------------------------------");
 
-		// Init plugin and transfer manager
-		plugin = Plugins.get(options.getConfigTO().getTransferSettings().getType(), TransferPlugin.class);
-
-		TransferSettings transferSettings = options.getConfigTO().getTransferSettings();
-		transferSettings.setUserInteractionListener(listener);
-
-		transferManager = plugin.createTransferManager(transferSettings, config);
+		transferManager = createTransferManagerFromNullConfig(options.getConfigTO());
 
 		// Test the repo
 		if (!performRepoTest()) {
@@ -107,6 +100,43 @@ public class InitOperation extends AbstractInitOperation {
 		File masterFile = new File(appDir, Config.FILE_MASTER);
 
 		// Save config.xml and repo file
+		saveLocalConfig(configFile, repoFile, masterFile, masterKeyPassword);
+
+		// Make remote changes
+		logger.log(Level.INFO, "Uploading local repository ...");
+		makeRemoteChanges(configFile, masterFile, repoFile);
+
+		// Shutdown plugin
+		transferManager.disconnect();
+
+		// Add to daemon (if requested)
+		addToDaemonIfEnabled();
+		createDefaultIgnoreFile();
+
+		// Make link
+		GenlinkOperationResult genlinkOperationResult = generateLink(options.getConfigTO());
+
+		result.setResultCode(InitResultCode.OK);
+		result.setGenLinkResult(genlinkOperationResult);
+
+		return result;
+	}
+
+	private void createDefaultIgnoreFile() throws IOException {
+		try {
+			File ignoreFile = new File(options.getLocalDir(), Config.FILE_IGNORE);
+
+			logger.log(Level.INFO, "Creating default .syignore file at " + ignoreFile + " ...");
+
+			InputStream defaultConfigFileinputStream = InitOperation.class.getResourceAsStream(DEFAULT_IGNORE_FILE);
+			Files.copy(defaultConfigFileinputStream, ignoreFile.toPath());
+		}
+		catch (IOException e) {
+			logger.log(Level.WARNING, "Error creating default .syignore file. IGNORING.", e);
+		}
+	}
+
+	private void saveLocalConfig(File configFile, File repoFile, File masterFile, String masterKeyPassword) throws Exception {
 		if (options.isEncryptionEnabled()) {
 			SaltedSecretKey masterKey = createMasterKeyFromPassword(masterKeyPassword); // This takes looong!
 			options.getConfigTO().setMasterKey(masterKey);
@@ -119,9 +149,9 @@ public class InitOperation extends AbstractInitOperation {
 		}
 
 		options.getConfigTO().save(configFile);
+	}
 
-		// Make remote changes
-		logger.log(Level.INFO, "Uploading local repository ...");
+	private void makeRemoteChanges(File configFile, File masterFile, File repoFile) throws Exception {
 		initRemoteRepository(configFile);
 
 		try {
@@ -134,11 +164,9 @@ public class InitOperation extends AbstractInitOperation {
 		catch (StorageException | IOException e) {
 			cleanLocalRepository(e);
 		}
+	}
 
-		// Shutdown plugin
-		transferManager.disconnect();
-
-		// Add to daemon (if requested)
+	private void addToDaemonIfEnabled() {
 		if (options.isDaemon()) {
 			try {
 				boolean addedToDaemonConfig = DaemonConfigHelper.addFolder(options.getLocalDir());
@@ -149,14 +177,6 @@ public class InitOperation extends AbstractInitOperation {
 				result.setAddedToDaemon(false);
 			}
 		}
-
-		// Make link
-		GenlinkOperationResult genlinkOperationResult = generateLink(options.getConfigTO());
-
-		result.setResultCode(InitResultCode.OK);
-		result.setGenLinkResult(genlinkOperationResult);
-
-		return result;
 	}
 
 	private boolean performRepoTest() {
@@ -187,7 +207,7 @@ public class InitOperation extends AbstractInitOperation {
 		try {
 			// Create 'syncany' and 'master' file, and all the remote folders
 			transferManager.init(options.isCreateTarget());
-			
+
 			// Some plugins change the transfer settings, re-save
 			options.getConfigTO().save(configFile);
 		}
@@ -230,16 +250,6 @@ public class InitOperation extends AbstractInitOperation {
 
 		SaltedSecretKey masterKey = CipherUtil.createMasterKey(masterPassword);
 		return masterKey;
-	}
-
-	protected boolean repoFileExistsOnRemoteStorage(TransferManager transferManager) throws Exception {
-		try {
-			Map<String, SyncanyRemoteFile> repoFileList = transferManager.list(SyncanyRemoteFile.class);
-			return repoFileList.size() > 0;
-		}
-		catch (Exception e) {
-			throw new Exception("Unable to connect to repository.", e);
-		}
 	}
 
 	private void uploadMasterFile(File masterFile, TransferManager transferManager) throws Exception {

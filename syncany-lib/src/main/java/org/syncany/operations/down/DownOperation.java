@@ -144,6 +144,7 @@ public class DownOperation extends AbstractTransferOperation {
 
 		// If we do down, we are no longer allowed to resume a transaction
 		transferManager.clearResumableTransactions();
+		transferManager.clearPendingTransactions();
 
 		DatabaseBranch localBranch = localDatabase.getLocalDatabaseBranch();
 		List<DatabaseRemoteFile> newRemoteDatabases = result.getLsRemoteResult().getUnknownRemoteDatabases();
@@ -236,6 +237,18 @@ public class DownOperation extends AbstractTransferOperation {
 			return false;
 		}
 
+		// Check if other operations are running
+		// We do this on purpose before LsRemote to prevent discrepancies
+		// between the LS result and the actual situation.
+		// This condition is so racy that it might not actually occur in
+		// practice, but it does in stresstests (#433)
+		if (otherRemoteOperationsRunning(CleanupOperation.ACTION_ID)) {
+			logger.log(Level.INFO, "* Cleanup running. Skipping down operation.");
+			result.setResultCode(DownResultCode.NOK);
+
+			return false;
+		}
+
 		// Check which remote databases to download based on the last local vector clock
 		LsRemoteOperationResult lsRemoteResult = listUnknownRemoteDatabases();
 		result.setLsRemoteResult(lsRemoteResult);
@@ -247,13 +260,7 @@ public class DownOperation extends AbstractTransferOperation {
 			return false;
 		}
 
-		// Check if other operations are running
-		if (otherRemoteOperationsRunning(CleanupOperation.ACTION_ID)) {
-			logger.log(Level.INFO, "* Cleanup running. Skipping down operation.");
-			result.setResultCode(DownResultCode.NOK);
 
-			return false;
-		}
 
 		return true;
 	}
@@ -319,7 +326,6 @@ public class DownOperation extends AbstractTransferOperation {
 			databaseSerializer.load(remoteDatabase, remoteDatabaseFileInCache, null, null, DatabaseReadType.HEADER_ONLY); // only load headers!
 
 			remoteDatabaseHeaders.put(remoteDatabaseFile, remoteDatabase.getDatabaseVersions());
-
 		}
 
 		return remoteDatabaseHeaders;

@@ -1,6 +1,6 @@
 Syncany
 =======
-[![Build Status](https://travis-ci.org/syncany/syncany.svg?branch=master)](https://travis-ci.org/syncany/syncany) [![Coverage Status](https://coveralls.io/repos/syncany/syncany/badge.svg?branch=develop)](https://syncany.org/reports/coverage/) [![Test Status](https://api.syncany.org/v3/badges/tests)](https://syncany.org/reports/tests/) [![Lines of Code](https://api.syncany.org/v3/badges/lines)](https://syncany.org/reports/cloc.xml) [![Contribute and get some Bitcoins for every commit](https://api.syncany.org/v3/badges/tips)](http://tip4commit.com/github/syncany/syncany) [![Documentation Status](https://readthedocs.org/projects/syncany/badge/?version=latest)](https://readthedocs.org/projects/syncany/?badge=latest) [![Issues needing your help](https://api.syncany.org/v3/badges/waffle)](http://waffle.io/syncany/syncany) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/thing/290043/Syncany)
+[![Build Status](https://travis-ci.org/syncany/syncany.svg?branch=master)](https://travis-ci.org/syncany/syncany) [![Coverage Status](https://coveralls.io/repos/syncany/syncany/badge.svg?branch=develop)](https://reports.syncany.org/coverage/) [![Test Status](https://api.syncany.org/v3/badges/tests)](https://reports.syncany.org/tests/) [![Lines of Code](https://api.syncany.org/v3/badges/lines)](https://syncany.org/reports/cloc.xml) [![Contribute and get some Bitcoins for every commit](https://api.syncany.org/v3/badges/tips)](http://tip4commit.com/github/syncany/syncany) [![User guide](https://readthedocs.org/projects/syncany/badge/?version=latest)](https://readthedocs.org/projects/syncany/?badge=latest) [![JavaDoc](https://api.syncany.org/v3/badges/javadoc)](https://docs.syncany.org/javadoc/) [![Issues needing your help](https://api.syncany.org/v3/badges/waffle)](http://waffle.io/syncany/syncany) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/thing/290043/Syncany)
 
 <img src="gradle/resources/syncany-logo.png" align="right" />
 
@@ -43,7 +43,7 @@ Break some hashes for us by [donating some Bitcoins](https://blockchain.info/add
 
 Licensing, website and contact
 ------------------------------
-Syncany is licensed under the GPLv3 open source license. It is actively developed by [Philipp C. Heckel](http://blog.philippheckel.com/), the [Syncany Team](https://github.com/orgs/syncany/teams/syncany-team) and [many](AUTHORS.md) [others](https://github.com/syncany/syncany/graphs/contributors). We are always looking for people to join or help out. Feel free to contact us:
+Syncany is licensed under the [GPLv3 open source license](LICENSE.md). It is actively developed by [Philipp C. Heckel](http://blog.philippheckel.com/), the [Syncany Team](https://github.com/orgs/syncany/teams/syncany-team) and [many](AUTHORS.md) [others](https://github.com/syncany/syncany/graphs/contributors). We are always looking for people to join or help out. Feel free to contact us:
 
 - [Syncany Website](https://www.syncany.org/), the main website
 - [Syncany User Guide](http://syncany.readthedocs.org/), **most important resource for end users**

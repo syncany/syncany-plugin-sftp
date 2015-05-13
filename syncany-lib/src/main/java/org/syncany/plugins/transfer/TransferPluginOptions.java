@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.simpleframework.xml.Element;
 import org.syncany.util.ReflectionUtil;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -47,49 +48,68 @@ public class TransferPluginOptions {
 		return getOrderedOptions(transferSettingsClass, 0);
 	}
 
-	@SuppressWarnings("unchecked")
 	private static List<TransferPluginOption> getOrderedOptions(Class<? extends TransferSettings> transferSettingsClass, int level) {
 		List<Field> fields = getOrderedFields(transferSettingsClass);
 		ImmutableList.Builder<TransferPluginOption> options = ImmutableList.builder();
 
 		for (Field field : fields) {
-			Element elementAnnotation = field.getAnnotation(Element.class);
-			Setup setupAnnotation = field.getAnnotation(Setup.class);
-
-			boolean hasName = !elementAnnotation.name().equalsIgnoreCase("");
-			boolean hasDescription = setupAnnotation != null && !setupAnnotation.description().equals("");
-			boolean hasCallback = setupAnnotation != null && !setupAnnotation.callback().isInterface();
-			boolean hasConverter = setupAnnotation != null && !setupAnnotation.converter().isInterface();
-			boolean hasFileType = setupAnnotation != null && setupAnnotation.fileType() != null;
-			
-			String name = (hasName) ? elementAnnotation.name() : field.getName();
-			String description = (hasDescription) ? setupAnnotation.description() : field.getName();
-			FileType fileType = (hasFileType) ? setupAnnotation.fileType() : null;
-			boolean required = elementAnnotation.required();
-			boolean sensitive = setupAnnotation != null && setupAnnotation.sensitive();
-			boolean singular = setupAnnotation != null && setupAnnotation.singular();
-			boolean visible = setupAnnotation != null && setupAnnotation.visible();
-			boolean encrypted = field.getAnnotation(Encrypted.class) != null;
-			Class<? extends TransferPluginOptionCallback> callback = (hasCallback) ? setupAnnotation.callback() : null;
-			Class<? extends TransferPluginOptionConverter> converter = (hasConverter) ? setupAnnotation.converter() : null;
-
-			boolean isNestedOption = TransferSettings.class.isAssignableFrom(field.getType());
-
-			if (isNestedOption) {
-				if (++level > MAX_NESTED_LEVELS) {
-					throw new RuntimeException("Plugin uses too many nested transfer settings (max allowed value: " + MAX_NESTED_LEVELS + ")");
-				}
-
-				Class<? extends TransferSettings> fieldClass = (Class<? extends TransferSettings>) field.getType();
-				options.add(new NestedTransferPluginOption(field, name, description, fieldClass, fileType, encrypted, sensitive, singular, visible, required, callback, converter,
-						getOrderedOptions(fieldClass)));
-			}
-			else {
-				options.add(new TransferPluginOption(field, name, description, field.getType(), fileType, encrypted, sensitive, singular, visible, required, callback, converter));
-			}
+			TransferPluginOption option = getOptionFromField(field, transferSettingsClass, level);
+			options.add(option);
 		}
 
 		return options.build();
+	}
+
+	private static TransferPluginOption getOptionFromField(Field field, Class<? extends TransferSettings> transferSettingsClass, int level) {
+		Element elementAnnotation = field.getAnnotation(Element.class);
+		Setup setupAnnotation = field.getAnnotation(Setup.class);
+
+		boolean hasName = !elementAnnotation.name().equalsIgnoreCase("");
+		boolean hasDescription = setupAnnotation != null && !setupAnnotation.description().equals("");
+		boolean hasCallback = setupAnnotation != null && !setupAnnotation.callback().isInterface();
+		boolean hasConverter = setupAnnotation != null && !setupAnnotation.converter().isInterface();
+		boolean hasFileType = setupAnnotation != null && setupAnnotation.fileType() != null;
+
+		String name = (hasName) ? elementAnnotation.name() : field.getName();
+		String description = (hasDescription) ? setupAnnotation.description() : field.getName();
+		FileType fileType = (hasFileType) ? setupAnnotation.fileType() : null;
+		boolean required = elementAnnotation.required();
+		boolean sensitive = setupAnnotation != null && setupAnnotation.sensitive();
+		boolean singular = setupAnnotation != null && setupAnnotation.singular();
+		boolean visible = setupAnnotation != null && setupAnnotation.visible();
+		boolean encrypted = field.getAnnotation(Encrypted.class) != null;
+		Class<? extends TransferPluginOptionCallback> callback = (hasCallback) ? setupAnnotation.callback() : null;
+		Class<? extends TransferPluginOptionConverter> converter = (hasConverter) ? setupAnnotation.converter() : null;
+
+		boolean isNestedOption = TransferSettings.class.isAssignableFrom(field.getType());
+
+		if (isNestedOption) {
+			return createNestedOption(field, level, name, description, fileType, encrypted, sensitive, singular, visible, required, callback, converter);
+		}
+		else {
+			return createNormalOption(field, transferSettingsClass, name, description, fileType, encrypted, sensitive, singular, visible, required, callback, converter);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static TransferPluginOption createNestedOption(Field field, int level, String name, String description, FileType fileType,
+			boolean encrypted, boolean sensitive, boolean singular, boolean visible, boolean required,
+			Class<? extends TransferPluginOptionCallback> callback, Class<? extends TransferPluginOptionConverter> converter) {
+
+		if (++level > MAX_NESTED_LEVELS) {
+			throw new RuntimeException("Plugin uses too many nested transfer settings (max allowed value: " + MAX_NESTED_LEVELS + ")");
+		}
+
+		Class<? extends TransferSettings> fieldClass = (Class<? extends TransferSettings>) field.getType();
+		return new NestedTransferPluginOption(field, name, description, fieldClass, fileType, encrypted, sensitive, singular, visible, required, callback, converter,
+				getOrderedOptions(fieldClass));
+	}
+
+	private static TransferPluginOption createNormalOption(Field field, Class<? extends TransferSettings> transferSettingsClass, String name,
+			String description, FileType fileType, boolean encrypted, boolean sensitive, boolean singular, boolean visible, boolean required,
+			Class<? extends TransferPluginOptionCallback> callback, Class<? extends TransferPluginOptionConverter> converter) {
+
+		return new TransferPluginOption(field, name, description, field.getType(), fileType, encrypted, sensitive, singular, visible, required, callback, converter);
 	}
 
 	private static List<Field> getOrderedFields(Class<? extends TransferSettings> transferSettingsClass) {
