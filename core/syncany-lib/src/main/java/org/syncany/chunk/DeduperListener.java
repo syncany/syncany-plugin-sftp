@@ -33,7 +33,7 @@ public interface DeduperListener {
 	 * used to ignore certain files. The method must return <tt>true</tt> if the deduper
 	 * shall continue processing, or <tt>false</tt> if a file should be skipped.
 	 * 
-	 * <p>For files excluded by this method, neither {@link #onFileStart(File) onFileStart()} nor
+	 * <p>For files excluded by this method, neither {@link #onFileStart(File, int) onFileStart()} nor
 	 * {@link #onFileEnd(File, byte[]) onFileEnd()} are called.
 	 * 
 	 * @param file File that is evaluated by the filter
@@ -50,10 +50,9 @@ public interface DeduperListener {
 	 * <p>The method is called for every file that was not excluded by {@link #onFileFilter(File) onFileFilter()}.
 	 * 
 	 * @param file File for which the deduplication process is about to be started
-	 * @param fileNumber Index of file being indexed
 	 * @return Returns <tt>true</tt> if the given file shall be deduplicated, <tt>false</tt> otherwise
 	 */
-	public boolean onFileStart(File file, int fileNumber);
+	public boolean onFileStart(File file);
 	
 	/**
 	 * Called by {@link Deduper} during the deduplication process for each chunk that was
@@ -90,7 +89,7 @@ public interface DeduperListener {
 	 * chunk to a multichunk.  
 	 * 
 	 * <p>The method is called zero to many times for every file, assuming that the file was not excluded
-	 * by {@link #onFileFilter(File) onFileFilter()}, or by {@link #onFileStart(File) onFileStart()}. 
+	 * by {@link #onFileFilter(File) onFileFilter()}, or by {@link #onFileStart(File, int) onFileStart()}. 
 	 * 
 	 * @param chunk The new chunk that the chunker emitted
 	 * @return Returns <tt>true</tt> if the chunk is new, and <tt>false</tt> otherwise
@@ -147,7 +146,7 @@ public interface DeduperListener {
 	 *  
 	 * @param size the number of files to be processed 
 	 */
-	public void onStart(int size);	
+	public void onStart(int fileCount);
 	
 	/**
 	 * Called by {@link Deduper} after finishing the deduplication process.
