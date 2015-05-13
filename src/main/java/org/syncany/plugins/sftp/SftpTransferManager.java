@@ -348,7 +348,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 		return getRemoteFilePath(remoteFile.getClass()) + "/" + remoteFile.getName();
 	}
 
-	private String getRemoteFilePath(Class<? extends RemoteFile> remoteFile) {
+	public String getRemoteFilePath(Class<? extends RemoteFile> remoteFile) {
 		if (remoteFile.equals(MultichunkRemoteFile.class)) {
 			return multichunksPath;
 		}
