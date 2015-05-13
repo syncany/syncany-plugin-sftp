@@ -44,7 +44,7 @@ import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
 import org.syncany.plugins.transfer.files.RemoteFile;
-import org.syncany.tests.util.TestFileUtil;
+import org.syncany.tests.unit.util.TestFileUtil;
 
 public class SftpConnectionPluginTest {
 	private static File tempLocalSourceDir;
