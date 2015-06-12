@@ -132,12 +132,13 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 			// Use pubkey authentication?
 			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null;
+			String passphrase = null;
 
 			if (usePublicKeyAuth) {
 				if (logger.isLoggable(Level.INFO)) {
 					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getSettings().getPrivateKey().getAbsolutePath());
 				}
-
+				passphrase = getSettings().getPrivateKey().getAbsolutePath();
 				secureChannel.addIdentity(getSettings().getPrivateKey().getAbsolutePath(), getSettings().getPassword());
 			}
 
@@ -154,7 +155,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			if (getSettings().getUserInteractionListener() != null) {
-				secureSession.setUserInfo(new SftpUserInfo());
+				secureSession.setUserInfo(new SftpUserInfo(passphrase, getSettings().getPassword()));
 			}
 
 			secureSession.connect();
@@ -507,32 +508,43 @@ public class SftpTransferManager extends AbstractTransferManager {
 	private class SftpUserInfo implements UserInfo {
 		private UserInteractionListener userInteractionListener;
 		private LocalEventBus eventBus;
+		private String passphrase;
+		private String password;
 
-		public SftpUserInfo() {
+		// TODO [low] It would be nice to allow actualy interactivity here. Maybe
+		/** 
+		 * This constructor stores supplied values to provide if interactivity is requested.
+		 * 
+		 * @param passphrase Path to a passphrase
+		 * @param password Relevant password
+		 */
+		public SftpUserInfo(String passphrase, String password) {
 			this.userInteractionListener = getSettings().getUserInteractionListener();
 			this.eventBus = LocalEventBus.getInstance();
+			this.passphrase = passphrase;
+			this.password = password;
 		}
 
 		@Override
 		public String getPassphrase() {
-			return null; // Not supported
+			return passphrase;
 		}
 
 		@Override
 		public String getPassword() {
-			return null; // Not supported
+			return password; // Not supported
 		}
 
 		@Override
 		public boolean promptPassword(String message) {
-			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Wrong SSH/SFTP password? This is NOT SUPPORTED right now.");
-			return false; // Do NOT let JSch ask for new password (if given password is wrong)
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Returning supplied password if there is one.");
+			return (password != null) && !password.isEmpty();
 		}
 
 		@Override
 		public boolean promptPassphrase(String message) {
-			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. This is NOT SUPPORTED right now.");
-			return false; // Do NOT let JSch ask for passphrase
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. Returning supplied passphrase if there is one.");
+			return (passphrase != null) && !passphrase.isEmpty();
 		}
 
 		@Override
