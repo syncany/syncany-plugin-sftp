@@ -57,6 +57,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
 
 /**
@@ -131,7 +132,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			// Use pubkey authentication?
-			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null;
+			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null && !getSettings().getPrivateKey().equals("");
 			String passphrase = null;
 
 			if (usePublicKeyAuth) {
@@ -505,13 +506,13 @@ public class SftpTransferManager extends AbstractTransferManager {
 		}
 	}
 
-	private class SftpUserInfo implements UserInfo {
+	private class SftpUserInfo implements UserInfo, UIKeyboardInteractive {
 		private UserInteractionListener userInteractionListener;
 		private LocalEventBus eventBus;
 		private String passphrase;
 		private String password;
 
-		// TODO [low] It would be nice to allow actualy interactivity here. Maybe
+		// TODO [low] It would be nice to allow actual interactivity here. Maybe.
 		/** 
 		 * This constructor stores supplied values to provide if interactivity is requested.
 		 * 
@@ -555,6 +556,15 @@ public class SftpTransferManager extends AbstractTransferManager {
 		@Override
 		public void showMessage(String message) {
 			eventBus.post(message);
+		}
+
+		/**
+		 * This method is only here such that Jsch thinks we are interactive, even when we already provided the password.
+		 */
+		@Override
+		public String[] promptKeyboardInteractive(String destination, String name, String instruction, String[] prompt, boolean[] echo) {
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask something. Currently not supported.");
+			return null;
 		}
 	}
 }
