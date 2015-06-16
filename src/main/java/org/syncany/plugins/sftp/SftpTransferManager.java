@@ -57,6 +57,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
 
 /**
@@ -131,14 +132,16 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			// Use pubkey authentication?
-			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null;
+			boolean usePublicKeyAuth = getSettings().getPrivateKey() != null && !getSettings().getPrivateKey().equals("");
+			String passphrase = null;
 
 			if (usePublicKeyAuth) {
+				passphrase = getSettings().getPrivateKey().getAbsolutePath();
 				if (logger.isLoggable(Level.INFO)) {
-					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getSettings().getPrivateKey().getAbsolutePath());
+					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + passphrase);
 				}
 
-				secureChannel.addIdentity(getSettings().getPrivateKey().getAbsolutePath(), getSettings().getPassword());
+				secureChannel.addIdentity(passphrase, getSettings().getPassword());
 			}
 
 			// Initialize secure session, and connect
@@ -154,7 +157,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 			}
 
 			if (getSettings().getUserInteractionListener() != null) {
-				secureSession.setUserInfo(new SftpUserInfo());
+				secureSession.setUserInfo(new SftpUserInfo(passphrase, getSettings().getPassword()));
 			}
 
 			secureSession.connect();
@@ -504,35 +507,46 @@ public class SftpTransferManager extends AbstractTransferManager {
 		}
 	}
 
-	private class SftpUserInfo implements UserInfo {
+	private class SftpUserInfo implements UserInfo, UIKeyboardInteractive {
 		private UserInteractionListener userInteractionListener;
 		private LocalEventBus eventBus;
+		private String passphrase;
+		private String password;
 
-		public SftpUserInfo() {
+		// TODO [low] It would be nice to allow actual interactivity here. Maybe.
+		/** 
+		 * This constructor stores supplied values to provide if interactivity is requested.
+		 * 
+		 * @param passphrase Path to a passphrase
+		 * @param password Relevant password
+		 */
+		public SftpUserInfo(String passphrase, String password) {
 			this.userInteractionListener = getSettings().getUserInteractionListener();
 			this.eventBus = LocalEventBus.getInstance();
+			this.passphrase = passphrase;
+			this.password = password;
 		}
 
 		@Override
 		public String getPassphrase() {
-			return null; // Not supported
+			return passphrase;
 		}
 
 		@Override
 		public String getPassword() {
-			return null; // Not supported
+			return password; // Not supported
 		}
 
 		@Override
 		public boolean promptPassword(String message) {
-			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Wrong SSH/SFTP password? This is NOT SUPPORTED right now.");
-			return false; // Do NOT let JSch ask for new password (if given password is wrong)
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a password. Returning supplied password if there is one.");
+			return (password != null) && !password.isEmpty();
 		}
 
 		@Override
 		public boolean promptPassphrase(String message) {
-			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. This is NOT SUPPORTED right now.");
-			return false; // Do NOT let JSch ask for passphrase
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask for a passphrase. Returning supplied passphrase if there is one.");
+			return (passphrase != null) && !passphrase.isEmpty();
 		}
 
 		@Override
@@ -543,6 +557,15 @@ public class SftpTransferManager extends AbstractTransferManager {
 		@Override
 		public void showMessage(String message) {
 			eventBus.post(message);
+		}
+
+		/**
+		 * This method is only here such that Jsch thinks we are interactive, even when we already provided the password.
+		 */
+		@Override
+		public String[] promptKeyboardInteractive(String destination, String name, String instruction, String[] prompt, boolean[] echo) {
+			logger.log(Level.WARNING, "SFTP Plugin tried to ask something. Currently not supported.");
+			return null;
 		}
 	}
 }

@@ -1,5 +1,8 @@
 Change Log
 ==========
+### Syncany SFTP Plugin 0.4.6-alpha (Date: TBA)
+- Fix authentication bug #410/#440
+
 ### Syncany SFTP Plugin 0.4.5-alpha (Date: 29 Mar 2015)
 - Enable passwordless public key usage #390
 
