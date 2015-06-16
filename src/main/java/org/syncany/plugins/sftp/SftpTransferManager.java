@@ -136,11 +136,12 @@ public class SftpTransferManager extends AbstractTransferManager {
 			String passphrase = null;
 
 			if (usePublicKeyAuth) {
-				if (logger.isLoggable(Level.INFO)) {
-					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + getSettings().getPrivateKey().getAbsolutePath());
-				}
 				passphrase = getSettings().getPrivateKey().getAbsolutePath();
-				secureChannel.addIdentity(getSettings().getPrivateKey().getAbsolutePath(), getSettings().getPassword());
+				if (logger.isLoggable(Level.INFO)) {
+					logger.log(Level.INFO, "SFTP: Using pubkey authentication with key " + passphrase);
+				}
+
+				secureChannel.addIdentity(passphrase, getSettings().getPassword());
 			}
 
 			// Initialize secure session, and connect
