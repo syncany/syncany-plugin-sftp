@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 package org.syncany.operations.watch;
 
 import java.io.IOException;
+import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Timer;
@@ -39,7 +40,7 @@ import org.syncany.util.EnvironmentUtil;
  * in different lifecycle states: {@link #beforeStart()}, {@link #beforePollEventLoop()},
  * {@link #pollEvents()}, and {@link #afterStop()}.
  *
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public abstract class RecursiveWatcher {
 	protected static final Logger logger = Logger.getLogger(RecursiveWatcher.class.getSimpleName());
@@ -114,7 +115,11 @@ public abstract class RecursiveWatcher {
 						}
 					}
 					catch (InterruptedException e) {
-						logger.log(Level.FINE, "Could not poll the events", e);
+						logger.log(Level.FINE, "Could not poll the events. EXITING watcher.", e);
+						running.set(false);
+					}
+					catch (ClosedWatchServiceException e) {
+						logger.log(Level.FINE, "Watch closed or polling failed. EXITING watcher.", e);
 						running.set(false);
 					}
 				}

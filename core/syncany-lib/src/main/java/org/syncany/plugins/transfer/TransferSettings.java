@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import java.lang.reflect.Type;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.common.base.MoreObjects;
 import org.apache.commons.io.IOUtils;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
@@ -40,8 +41,6 @@ import org.syncany.plugins.UserInteractionListener;
 import org.syncany.util.ReflectionUtil;
 import org.syncany.util.StringUtil;
 
-import com.google.common.base.Objects;
-
 /**
  * A connection represents the configuration settings of a storage/connection
  * plugin. It is created through the concrete implementation of a {@link Plugin}.
@@ -49,8 +48,8 @@ import com.google.common.base.Objects;
  * <p>Options for a plugin specific {@link TransferSettings} can be defined using the
  * {@link Element} annotation. Furthermore some Syncany-specific annotations are available.
  *
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
+ * @author Christian Roth (christian.roth@port17.de)
  */
 public abstract class TransferSettings {
 	private static final Logger logger = Logger.getLogger(TransferSettings.class.getName());
@@ -238,7 +237,7 @@ public abstract class TransferSettings {
 
 	@Override
 	public String toString() {
-		Objects.ToStringHelper toStringHelper = Objects.toStringHelper(this);
+		MoreObjects.ToStringHelper toStringHelper = MoreObjects.toStringHelper(this);
 
 		for (Field field : ReflectionUtil.getAllFieldsWithAnnotation(this.getClass(), Element.class)) {
 			field.setAccessible(true);

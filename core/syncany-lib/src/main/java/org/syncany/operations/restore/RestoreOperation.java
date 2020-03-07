@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import org.syncany.database.MultiChunkEntry.MultiChunkId;
 import org.syncany.database.PartialFileHistory.FileHistoryId;
 import org.syncany.database.SqlDatabase;
 import org.syncany.operations.AbstractTransferOperation;
+import org.syncany.operations.Assembler;
 import org.syncany.operations.Downloader;
 import org.syncany.operations.restore.RestoreOperationResult.RestoreResultCode;
 import org.syncany.plugins.transfer.StorageException;
@@ -45,6 +46,8 @@ public class RestoreOperation extends AbstractTransferOperation {
 	private SqlDatabase localDatabase;
 	private Downloader downloader;
 
+	private Assembler assembler;
+
 	public RestoreOperation(Config config) {
 		this(config, new RestoreOperationOptions());
 	}
@@ -55,6 +58,7 @@ public class RestoreOperation extends AbstractTransferOperation {
 		this.options = options;
 		this.localDatabase = new SqlDatabase(config);
 		this.downloader = new Downloader(config, transferManager);
+		this.assembler = new Assembler(config, localDatabase, null);
 	}
 
 	@Override
@@ -88,7 +92,7 @@ public class RestoreOperation extends AbstractTransferOperation {
 		// Restore file
 		logger.log(Level.INFO, "- Restoring: " + restoreFileVersion);
 
-		RestoreFileSystemAction restoreAction = new RestoreFileSystemAction(config, restoreFileVersion, options.getRelativeTargetPath());
+		RestoreFileSystemAction restoreAction = new RestoreFileSystemAction(config, assembler, restoreFileVersion, options.getRelativeTargetPath());
 		RestoreFileSystemActionResult restoreResult = restoreAction.execute();
 
 		return new RestoreOperationResult(RestoreResultCode.ACK, restoreResult.getTargetFile());
@@ -106,7 +110,12 @@ public class RestoreOperation extends AbstractTransferOperation {
 			List<FileVersion> fileHistory = localDatabase.getFileHistory(restoreFileHistoryId);
 			
 			if (fileHistory.size() >= 2) { 
+				// In this case, we automatically restore the "previous" version
 				return fileHistory.get(fileHistory.size()-2);
+			}
+			else if (fileHistory.size() == 1){
+				// In this case, we restore the last version. This is likely a deleted version.
+				return fileHistory.get(0);
 			}
 			else {
 				return null;

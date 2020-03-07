@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -225,7 +225,7 @@ public class PluginCommand extends Command {
 			
 			if (thirdPartyCount > 0) {
 				String pluginPlugins = (thirdPartyCount == 1) ? "plugin" : "plugins";				
-				out.printf("\nThird party plugins:\nPlease note that the Syncany Team does not take review or maintain the third-party %s\nlisted above. Please report issues to the corresponding plugin site.\n", pluginPlugins);
+				out.printf("\nThird party plugins:\nPlease note that the Syncany Team does not review or maintain the third-party %s\nlisted above. Please report issues to the corresponding plugin site.\n", pluginPlugins);
 			}
 		}
 		else {

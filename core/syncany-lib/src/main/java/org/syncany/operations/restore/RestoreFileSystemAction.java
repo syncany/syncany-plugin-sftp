@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,14 +25,15 @@ import org.syncany.database.FileVersion;
 import org.syncany.database.FileVersion.FileStatus;
 import org.syncany.database.FileVersion.FileType;
 import org.syncany.database.MemoryDatabase;
+import org.syncany.operations.Assembler;
 import org.syncany.operations.down.actions.FileCreatingFileSystemAction;
 import org.syncany.util.NormalizedPath;
 
 public class RestoreFileSystemAction extends FileCreatingFileSystemAction {
 	private String relativeTargetPath;
 	
-	public RestoreFileSystemAction(Config config, FileVersion fileVersion, String relativeTargetPath) {
-		super(config, new MemoryDatabase(), null, fileVersion);
+	public RestoreFileSystemAction(Config config, Assembler assembler, FileVersion fileVersion, String relativeTargetPath) {
+		super(config, new MemoryDatabase(), assembler, null, fileVersion);
 		this.relativeTargetPath = relativeTargetPath;
 	}
 
@@ -45,10 +46,6 @@ public class RestoreFileSystemAction extends FileCreatingFileSystemAction {
 			throw new Exception("Not yet implemented.");
 		}
 		else {
-			if (fileVersion2.getStatus() == FileStatus.DELETED) {
-				throw new Exception("Cannot restore version marked DELETED. Try previous version.");
-			}
-			
 			// Assemble file to cache
 			File cacheFile = assembleFileToCache(fileVersion2);
 			

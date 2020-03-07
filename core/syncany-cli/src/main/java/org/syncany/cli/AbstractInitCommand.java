@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+
 import org.syncany.cli.util.InitConsole;
 import org.syncany.config.to.ConfigTO;
 import org.syncany.crypto.CipherUtil;
@@ -58,20 +61,19 @@ import org.syncany.plugins.transfer.oauth.OAuthTokenWebListener;
 import org.syncany.util.ReflectionUtil;
 import org.syncany.util.StringUtil;
 import org.syncany.util.StringUtil.StringJoinListener;
+
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
 
 /**
  * The abstract init command provides multiple shared methods for the 'init'
  * and 'connect' command. Both commands must provide the ability to
  * query a user for transfer settings or parse settings from the command line
  *
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
+ * @author Christian Roth (christian.roth@port17.de)
  */
 public abstract class AbstractInitCommand extends Command implements UserInteractionListener {
 	private static final Logger logger = Logger.getLogger(AbstractInitCommand.class.getName());
@@ -331,7 +333,7 @@ public abstract class AbstractInitCommand extends Command implements UserInterac
 	 * asks for all of the plugin's settings.
 	 *
 	 * <p>This case is triggered by a field looking like this:
-	 * <tt>private TransferSettings childPluginSettings;</tt>
+	 * <code>private TransferSettings childPluginSettings;</code>
 	 */
 	private void askGenericChildPluginSettings(TransferSettings settings, TransferPluginOption option, Map<String, String> knownPluginSettings,
 			String nestPrefix)
@@ -389,7 +391,7 @@ public abstract class AbstractInitCommand extends Command implements UserInterac
 	 * Asks the user for all of the child plugin's settings.
 	 *
 	 * <p>This case is triggered by a field looking like this:
-	 * <tt>private LocalTransferSettings localChildPluginSettings;</tt>
+	 * <code>private LocalTransferSettings localChildPluginSettings;</code>
 	 */
 	private void askConreteChildPluginSettings(TransferSettings settings, NestedTransferPluginOption option, Map<String, String> knownPluginSettings,
 			String nestPrefix) throws StorageException, IllegalAccessException, InstantiationException, IllegalArgumentException,
@@ -559,7 +561,7 @@ public abstract class AbstractInitCommand extends Command implements UserInterac
 	private String getDescription(TransferSettings settings, TransferPluginOption option) {
 		Class<?> clazzForType = ReflectionUtil.getClassFromType(option.getType());
 
-		if (Enum.class.isAssignableFrom(clazzForType)) {
+		if (clazzForType != null && Enum.class.isAssignableFrom(clazzForType)) {
 			Object[] enumValues = clazzForType.getEnumConstants();
 
 			if (enumValues == null) {

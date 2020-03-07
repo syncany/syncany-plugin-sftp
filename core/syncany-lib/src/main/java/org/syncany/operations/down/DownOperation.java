@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ import com.google.common.collect.Sets.SetView;
  * <p>The general operation flow is as follows:
  * <ol>
  *  <li>List all database versions on the remote storage using the {@link LsRemoteOperation}
- *      (implemented in {@link #listUnknownRemoteDatabases(MemoryDatabase, TransferManager) listUnknownRemoteDatabases()}</li>
+ *      (implemented in {@link #listUnknownRemoteDatabases() listUnknownRemoteDatabases()}</li>
  *  <li>Download unknown databases using a {@link TransferManager} (if any), skip the rest down otherwise
- *      (implemented in {@link #downloadUnknownRemoteDatabases(TransferManager, List) downloadUnknownRemoteDatabases()}</li>
+ *      (implemented in {@link #downloadUnknownRemoteDatabases(List) downloadUnknownRemoteDatabases()}</li>
  *  <li>Load remote database headers (branches) and compare them to the local database to determine a winner
  *      using several methods of the {@link DatabaseReconciliator}</li>
  *  <li>Determine whether the local branch conflicts with the winner branch; if so, prune conflicting
@@ -85,7 +85,7 @@ import com.google.common.collect.Sets.SetView;
  * </ol>
  *
  * @see DatabaseReconciliator
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class DownOperation extends AbstractTransferOperation {
 	private static final Logger logger = Logger.getLogger(DownOperation.class.getSimpleName());
@@ -224,9 +224,9 @@ public class DownOperation extends AbstractTransferOperation {
 	 * Checks whether any new databases are only and whether any other conflicting
 	 * actions are running.
 	 *
-	 * <p>This method sets the result code in <tt>result</tt> according to the
-	 * checking result and returns <tt>true</tt> if the rest of the operation can
-	 * continue, <tt>false</tt> otherwise.
+	 * <p>This method sets the result code in <code>result</code> according to the
+	 * checking result and returns <code>true</code> if the rest of the operation can
+	 * continue, <code>false</code> otherwise.
 	 */
 	private boolean checkPreconditions() throws Exception {
 		// Check strategies
@@ -375,7 +375,6 @@ public class DownOperation extends AbstractTransferOperation {
 	 *
 	 * <p>The detailed algorithm is described in the {@link DatabaseReconciliator}.
 	 *
-	 * @param localBranch Local database branch (extracted from the local database)
 	 * @param allStitchedBranches The newly downloaded remote database version headers (= branches)
 	 * @return Returns the branch of the winner
 	 * @throws Exception If any kind of error occurs (...)
@@ -395,7 +394,7 @@ public class DownOperation extends AbstractTransferOperation {
 	}
 
 	/**
-	 * Marks locally conflicting database versions as <tt>DIRTY</tt> and removes remote databases that
+	 * Marks locally conflicting database versions as <code>DIRTY</code> and removes remote databases that
 	 * correspond to those database versions. This method uses the {@link DatabaseReconciliator}
 	 * to determine whether there is a local purge branch.
 	 */
@@ -457,119 +456,43 @@ public class DownOperation extends AbstractTransferOperation {
 		}
 		else {
 			logger.log(Level.INFO, "Loading winners database (DEFAULT) ...");
-			MemoryDatabase winnersDatabase = readWinnersDatabase(winnersApplyBranch, databaseVersionLocations);
+			DatabaseFileReader databaseFileReader = new DatabaseFileReader(databaseSerializer, winnersApplyBranch, databaseVersionLocations);
 
-			if (options.isApplyChanges()) {
-				new ApplyChangesOperation(config, localDatabase, transferManager, winnersDatabase, result, cleanupOccurred,
-						preDeleteFileHistoriesWithLastVersion).execute();
-			}
+			boolean noDatabaseVersions = !databaseFileReader.hasNext();
+			
+			if (noDatabaseVersions) {
+				applyChangesAndPersistDatabase(new MemoryDatabase(), cleanupOccurred, preDeleteFileHistoriesWithLastVersion);
+			} 
 			else {
-				logger.log(Level.INFO, "Doing nothing on the file system, because --no-apply switched on");
+				while (databaseFileReader.hasNext()) {
+					MemoryDatabase winnersDatabase = databaseFileReader.next();
+					applyChangesAndPersistDatabase(winnersDatabase, cleanupOccurred, preDeleteFileHistoriesWithLastVersion);					
+				}
 			}
-
-			persistDatabaseVersions(winnersApplyBranch, winnersDatabase);
 
 			result.setResultCode(DownResultCode.OK_WITH_REMOTE_CHANGES);
 		}
 	}
 
-	/**
-	 * Loads the winner's database branch into the memory in a {@link MemoryDatabase} object, by using
-	 * the already downloaded list of remote database files.
-	 *
-	 * <p>Because database files can contain multiple {@link DatabaseVersion}s per client, a range for which
-	 * to load the database versions must be determined.
-	 *
-	 * <p><b>Example 1:</b><br />
-	 * <pre>
-	 *  db-A-0001   (A1)     Already known             Not loaded
-	 *  db-A-0005   (A2)     Already known             Not loaded
-	 *              (A3)     Already known             Not loaded
-	 *              (A4)     Part of winner's branch   Loaded
-	 *              (A5)     Purge database version    Ignored (only DEFAULT)
-	 *  db-B-0001   (A5,B1)  Part of winner's branch   Loaded
-	 *  db-A-0006   (A6,B1)  Part of winner's branch   Loaded
-	 * </pre>
-	 *
-	 * <p>In example 1, only (A4)-(A5) must be loaded from db-A-0005, and not all four database versions.
-	 *
-	 * <p><b>Other example:</b><br />
-	 * <pre>
-	 *  db-A-0005   (A1)     Part of winner's branch   Loaded
-	 *  db-A-0005   (A2)     Part of winner's branch   Loaded
-	 *  db-B-0001   (A2,B1)  Part of winner's branch   Loaded
-	 *  db-A-0005   (A3,B1)  Part of winner's branch   Loaded
-	 *  db-A-0005   (A4,B1)  Part of winner's branch   Loaded
-	 *  db-A-0005   (A5,B1)  Purge database version    Ignored (only DEFAULT)
-	 * </pre>
-	 *
-	 * <p>In example 2, (A1)-(A5,B1) [except (A2,B1)] are contained in db-A-0005 (after merging!), so
-	 * db-A-0005 must be processed twice; each time loading separate parts of the file. In this case:
-	 * First load (A1)-(A2) from db-A-0005, then load (A2,B1) from db-B-0001, then load (A3,B1)-(A4,B1)
-	 * from db-A-0005, and ignore (A5,B1).
-	 * @param databaseFileList
-	 * @param ignoredMostRecentPurgeVersions
-	 *
-	 * @return Returns a loaded memory database containing all metadata from the winner's branch
-	 */
-	private MemoryDatabase readWinnersDatabase(DatabaseBranch winnersApplyBranch, Map<DatabaseVersionHeader, File> databaseVersionLocations)
-			throws IOException, StorageException {
-
-		MemoryDatabase winnerBranchDatabase = new MemoryDatabase();
-
-		List<DatabaseVersionHeader> winnersApplyBranchList = winnersApplyBranch.getAll();
-
-		String rangeClientName = null;
-		VectorClock rangeVersionFrom = null;
-		VectorClock rangeVersionTo = null;
-
-		for (int i = 0; i < winnersApplyBranchList.size(); i++) {
-			DatabaseVersionHeader currentDatabaseVersionHeader = winnersApplyBranchList.get(i);
-			DatabaseVersionHeader nextDatabaseVersionHeader = (i + 1 < winnersApplyBranchList.size()) ? winnersApplyBranchList.get(i + 1) : null;
-
-			// First of range for this client
-			if (rangeClientName == null) {
-				rangeClientName = currentDatabaseVersionHeader.getClient();
-				rangeVersionFrom = currentDatabaseVersionHeader.getVectorClock();
-				rangeVersionTo = currentDatabaseVersionHeader.getVectorClock();
-			}
-
-			// Still in range for this client
-			else {
-				rangeVersionTo = currentDatabaseVersionHeader.getVectorClock();
-			}
-
-			// Now load this stuff from the database file (or not)
-			//   - If the database file exists, load the range and reset it
-			//   - If not, only force a load if this is the range end
-
-			File databaseVersionFile = databaseVersionLocations.get(currentDatabaseVersionHeader);
-
-			if (databaseVersionFile == null) {
-				throw new StorageException("Could not find file corresponding to " + currentDatabaseVersionHeader
-						+ ", while it is in the winners branch.");
-			}
-
-			boolean lastDatabaseVersionHeader = nextDatabaseVersionHeader == null;
-			boolean nextDatabaseVersionInSameFile = lastDatabaseVersionHeader
-					|| databaseVersionFile.equals(databaseVersionLocations.get(nextDatabaseVersionHeader));
-			boolean rangeEnds = lastDatabaseVersionHeader || !nextDatabaseVersionInSameFile;
-
-			if (rangeEnds) {
-				databaseSerializer.load(winnerBranchDatabase, databaseVersionFile, rangeVersionFrom, rangeVersionTo, DatabaseReadType.FULL);
-				rangeClientName = null;
-			}
+	private void applyChangesAndPersistDatabase(MemoryDatabase winnersDatabase, boolean cleanupOccurred, 
+			List<PartialFileHistory> preDeleteFileHistoriesWithLastVersion) throws Exception {
+		
+		if (options.isApplyChanges()) {
+			new ApplyChangesOperation(config, localDatabase, transferManager, winnersDatabase, result, cleanupOccurred,
+					preDeleteFileHistoriesWithLastVersion).execute();
+		}
+		else {
+			logger.log(Level.INFO, "Doing nothing on the file system, because --no-apply switched on");
 		}
 
-		if (logger.isLoggable(Level.FINE)) {
-			logger.log(Level.FINE, "Winner Database Branch:");
-
-			for (DatabaseVersion dbv : winnerBranchDatabase.getDatabaseVersions()) {
-				logger.log(Level.FINE, "- " + dbv.getHeader());
-			}
+		// We only persist the versions that we have already applied.
+		DatabaseBranch currentApplyBranch = new DatabaseBranch();
+		for (DatabaseVersion databaseVersion : winnersDatabase.getDatabaseVersions()) {
+			currentApplyBranch.add(databaseVersion.getHeader());
 		}
 
-		return winnerBranchDatabase;
+		persistDatabaseVersions(currentApplyBranch, winnersDatabase);
+		localDatabase.commit();
 	}
 
 	/**

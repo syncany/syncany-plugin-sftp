@@ -5,8 +5,8 @@ subprojects {
 	
 	group = 'org.syncany'		
 		
-	sourceCompatibility = 1.7
-	targetCompatibility = 1.7
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
 	
 	repositories {
 		mavenCentral()
@@ -14,23 +14,22 @@ subprojects {
 	
 	sourceSets {
 		main {
-			java      { srcDir 'src/main/java'}
-			resources { srcDir 'src/main/resources'}
+			java      { srcDirs = ['src/main/java']}
+			resources { srcDirs = ['src/main/resources']}
 		}
 		
 		test {
-			java      { srcDir 'src/test/unit/java'}
-			resources { srcDir 'src/test/resources'}
+			java      { srcDirs = ['src/test/java']}
+			resources { srcDirs = ['src/test/resources']}
 		}
 
-    integration {
-			java      { srcDir 'src/test/integration/java' }
-			resources { srcDir 'src/test/resources'}
+		integration {
+			java      { srcDirs = ['src/it/java'] }
+			resources { srcDirs = ['src/it/resources']}
 			compileClasspath += sourceSets.test.compileClasspath
 			runtimeClasspath += sourceSets.test.runtimeClasspath
 			output.classesDir = sourceSets.test.output.classesDir
-    }
-
+		} 
 	}
 
 	dependencies {

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ import org.syncany.plugins.transfer.files.ActionRemoteFile;
  * every {@link #ACTION_RENEWAL_INTERVAL} milliseconds. The {@link #finish()} method stops this timer.
  * 
  * @see CleanupOperation
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class ActionFileHandler {	
 	private static final Logger logger = Logger.getLogger(ActionFileHandler.class.getSimpleName());

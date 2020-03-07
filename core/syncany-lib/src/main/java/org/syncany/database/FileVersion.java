@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,15 @@ import org.syncany.database.PartialFileHistory.FileHistoryId;
  * A file version represents a version of a file at a certain time and captures
  * all of a file's properties.
  *
- * <p>A {@link PartialFileHistory} typically consists of multiple <tt>FileVersion</tt>s,
+ * <p>A {@link PartialFileHistory} typically consists of multiple <code>FileVersion</code>s,
  * each of which is the incarnation of the same file, but with either changed properties,
  * or changed content.
  *
- * <p>The <tt>FileVersion</tt>'s checksum attribute implicitly links to a {@link FileContent},
+ * <p>The <code>FileVersion</code>'s checksum attribute implicitly links to a {@link FileContent},
  * which represents the content of a file. Multiple file versions can link to the same file content.
  *
  * @see PartialFileHistory
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class FileVersion implements Cloneable {
 	// Optional

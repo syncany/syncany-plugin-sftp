@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,10 +45,10 @@ import org.syncany.util.StringUtil;
  * used in the operations, but parts of it are also used in other parts of the
  * application -- especially file locations and names.
  *
- * <p>An instance of the <tt>Config</tt> class must be created through the transfer
+ * <p>An instance of the <code>Config</code> class must be created through the transfer
  * objects {@link ConfigTO} and {@link RepoTO}.
  *
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class Config {
 	public static final String DIR_APPLICATION = ".syncany";
@@ -237,7 +237,11 @@ public class Config {
 	}
 
 	public java.sql.Connection createDatabaseConnection() {
-		return DatabaseConnectionFactory.createConnection(getDatabaseFile());
+		return DatabaseConnectionFactory.createConnection(getDatabaseFile(), false);
+	}
+
+	public java.sql.Connection createDatabaseConnection(boolean readOnly) {
+		return DatabaseConnectionFactory.createConnection(getDatabaseFile(), readOnly);
 	}
 
 	public File getCacheDir() {
