@@ -146,6 +146,7 @@ public class SftpConnectionPluginTest {
 		// Create connection, upload, list, download
 		TransferManager transferManager = loadPluginAndCreateTransferManager();		
 		transferManager.connect();	
+		transferManager.init(true);
 
 		Map<File, RemoteFile> uploadedFiles = uploadChunkFiles(transferManager, inputFiles.values());
 		Map<String, RemoteFile> remoteFiles = transferManager.list(RemoteFile.class);
