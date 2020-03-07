@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.file.nativefs.NativeFileSystemFactory;
+import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.PasswordAuthenticator;
 import org.apache.sshd.server.UserAuth;
@@ -33,6 +33,8 @@ import org.apache.sshd.server.command.ScpCommandFactory;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
 import org.apache.sshd.server.sftp.SftpSubsystem;
+
+import org.syncany.tests.util.TestFileUtil;
 
 /**
  * @author vincent
@@ -50,13 +52,16 @@ public class EmbeddedSftpServerTest {
 		}
 	}
 
-	public static void startServer() throws IOException {
+	public static void startServer() throws IOException, Exception {
 		File hostKeyFile = File.createTempFile("hostkey", "ser");
 		
 		sshd = SshServer.setUpDefaultServer();
 		sshd.setPort(PORT);
 		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(hostKeyFile.getAbsolutePath()));
-		sshd.setFileSystemFactory(new NativeFileSystemFactory());
+
+		File rootDir = TestFileUtil.createTempDirectoryInSystemTemp();
+		rootDir.mkdir();
+		sshd.setFileSystemFactory(new VirtualFileSystemFactory(rootDir.toString()));
 
 		List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
 		userAuthFactories.add(new UserAuthPassword.Factory());

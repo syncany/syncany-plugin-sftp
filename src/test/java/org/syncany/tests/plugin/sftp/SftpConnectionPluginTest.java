@@ -44,6 +44,7 @@ import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
 import org.syncany.plugins.transfer.files.RemoteFile;
+import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
 import org.syncany.tests.util.TestFileUtil;
 
 public class SftpConnectionPluginTest {
@@ -57,6 +58,9 @@ public class SftpConnectionPluginTest {
 			EmbeddedSftpServerTest.startServer();
 		}
 		catch (IOException e) {
+			e.printStackTrace();
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
