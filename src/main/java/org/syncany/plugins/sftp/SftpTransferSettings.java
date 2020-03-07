@@ -19,6 +19,7 @@ package org.syncany.plugins.sftp;
 
 import java.io.File;
 
+import com.google.common.base.MoreObjects;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Validate;
 import org.syncany.plugins.transfer.Encrypted;
@@ -26,7 +27,6 @@ import org.syncany.plugins.transfer.FileType;
 import org.syncany.plugins.transfer.Setup;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferSettings;
-import com.google.common.base.Objects;
 
 /**
  * The SFTP connection represents the settings required to connect to an
@@ -128,7 +128,7 @@ public class SftpTransferSettings extends TransferSettings {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return MoreObjects.toStringHelper(this)
 						.add("hostname", hostname)
 						.add("port", port)
 						.add("username", username)
