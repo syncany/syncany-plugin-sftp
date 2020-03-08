@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ import com.google.common.hash.Hashing;
  * @see PathAware
  * @see PathAwareFeatureExtension
  * @see PathAwareRemoteFileAttributes
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Christian Roth (christian.roth@port17.de)
  */
 public class PathAwareFeatureTransferManager implements FeatureTransferManager {
 	private static final Logger logger = Logger.getLogger(PathAwareFeatureTransferManager.class.getSimpleName());
@@ -272,7 +272,7 @@ public class PathAwareFeatureTransferManager implements FeatureTransferManager {
 	}
 
 	private String pathToString(Path path) {
-		return path.toString().replaceAll(File.separator, String.valueOf(folderSeparator));
+		return path.toString().replace(File.separator, String.valueOf(folderSeparator));
 	}
 
 	private boolean createFolder(RemoteFile remoteFile) throws StorageException {

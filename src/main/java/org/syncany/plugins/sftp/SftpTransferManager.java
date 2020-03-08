@@ -146,7 +146,7 @@ public class SftpTransferManager extends AbstractTransferManager {
 
 			// Initialize secure session, and connect
 			Properties properties = new Properties();
-			properties.put("StrictHostKeyChecking", "ask");
+			properties.put("StrictHostKeyChecking", getSettings().getCheckHostKeyAsString());
 
 			secureSession = secureChannel.getSession(getSettings().getUsername(), getSettings().getHostname(), getSettings().getPort());
 			secureSession.setConfig(properties);

@@ -7,7 +7,7 @@ apply from: 'gradle/gradle/helpers.gradle'
 // Global Settings /////////////////////////////////////////////////////////////
 
 project.ext {
-	applicationVersion = "0.4.6-alpha"
+	applicationVersion = "0.4.9-alpha"
 	applicationVersionDebian = "1";
 
 	applicationRelease = isApplicationRelease()
@@ -29,7 +29,6 @@ apply from: 'gradle/gradle/packaging.debian.gradle'
 apply from: 'gradle/gradle/reports.coverage.gradle'
 apply from: 'gradle/gradle/reports.tests.gradle'
 apply from: 'gradle/gradle/reports.javadoc.gradle'
-apply from: 'gradle/gradle/reports.sonarqube.gradle'
 
 apply from: 'gradle/gradle/development.eclipse.gradle'
 apply from: 'gradle/gradle/development.fakeinstall.gradle'
@@ -49,4 +48,7 @@ dependencies {
 	testCompile		project(path: ":syncany-lib", configuration: "tests")
 	testCompile		project(path: ":syncany-cli", configuration: "tests")
 	testCompile		project(path: ":syncany-util", configuration: "tests")
+	
+	testRuntime "org.slf4j:slf4j-log4j12:1.7.5"
+	testRuntime "log4j:log4j:1.2.7"
 }

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import org.syncany.util.StringUtil;
  * As of now, it uses a byte array internally, but could also use different
  * more memory-preserving methods (such as two longs).  
  * 
- * @author Fabrice Rossi <fabrice.rossi@apiacoa.org>
+ * @author Fabrice Rossi (fabrice.rossi@apiacoa.org)
  */
 public abstract class ObjectId {
 	private static SecureRandom secureRng = new SecureRandom();

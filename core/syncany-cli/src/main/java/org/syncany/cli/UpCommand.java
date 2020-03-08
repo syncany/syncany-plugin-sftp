@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -143,6 +143,6 @@ public class UpCommand extends Command {
 
 	@Subscribe
 	public void onIndexMidEventReceived(UpIndexMidSyncExternalEvent syncEvent) {
-		out.printr("Indexed and uploaded " + syncEvent.getCurrentIndex() + "/" + syncEvent.getFileCount() + " file(s)...");
+		out.printr("Indexed " + syncEvent.getCurrentIndex() + "/" + syncEvent.getFileCount() + " file(s)...");
 	}
 }

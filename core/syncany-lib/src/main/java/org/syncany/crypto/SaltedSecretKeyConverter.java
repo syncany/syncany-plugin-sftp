@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import org.syncany.util.StringUtil;
  * Converter to properly encode a {@link SaltedSecretKey} when writing 
  * an XML. Salt and key are serialized as attributes.
  * 
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Christian Roth (christian.roth@port17.de)
  */
 public class SaltedSecretKeyConverter implements Converter<SaltedSecretKey> {
 	public SaltedSecretKey read(InputNode node) throws Exception {

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,12 @@ package org.syncany.operations.down.actions;
 import org.syncany.config.Config;
 import org.syncany.database.FileVersion;
 import org.syncany.database.MemoryDatabase;
+import org.syncany.operations.Assembler;
 
 public class NewFileSystemAction extends FileCreatingFileSystemAction {
 
-	public NewFileSystemAction(Config config, FileVersion newFileVersion, MemoryDatabase winningDatabase) {
-		super(config, winningDatabase, null, newFileVersion);
+	public NewFileSystemAction(Config config, MemoryDatabase winningDatabase, Assembler assembler, FileVersion newFileVersion) {
+		super(config, winningDatabase, assembler, null, newFileVersion);
 	}
 	
 	@Override

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import com.google.common.collect.ImmutableMap;
  * The file version DAO queries and modifies the <i>fileversion</i> in
  * the SQL database. This table corresponds to the Java object {@link FileVersion}.
  *
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class FileVersionSqlDao extends AbstractSqlDao {
 	private static final Logger logger = Logger.getLogger(FileVersionSqlDao.class.getSimpleName());	
@@ -68,7 +68,7 @@ public class FileVersionSqlDao extends AbstractSqlDao {
 	}
 
 	/**
-	 * Writes a list of {@link FileVersion} to the database table <i>fileversion</i> using <tt>INSERT</tt>s
+	 * Writes a list of {@link FileVersion} to the database table <i>fileversion</i> using <code>INSERT</code>s
 	 * and the given connection.
 	 *
 	 * <p><b>Note:</b> This method executes, but <b>does not commit</b> the queries.
@@ -109,7 +109,7 @@ public class FileVersionSqlDao extends AbstractSqlDao {
 
 	/**
 	 * Removes {@link FileVersion}s from the database table <i>fileversion</i> for which the
-	 * the corresponding database is marked <tt>DIRTY</tt>.
+	 * the corresponding database is marked <code>DIRTY</code>.
 	 *
 	 * <p><b>Note:</b> This method executes, but does not commit the query.
 	 *
@@ -279,18 +279,6 @@ public class FileVersionSqlDao extends AbstractSqlDao {
 		return fileTypesStr;
 	}
 
-	public Map<FileHistoryId, FileVersion> getFileHistoriesWithMaxPurgeVersion(int keepVersionsCount) {
-		try (PreparedStatement preparedStatement = getStatement("fileversion.select.all.getMaxPurgeVersions.sql")) {
-			preparedStatement.setInt(1, keepVersionsCount);
-			preparedStatement.setInt(2, keepVersionsCount);
-
-			return getSingleVersionInHistory(preparedStatement);
-		}
-		catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public Map<FileHistoryId, List<FileVersion>> getFileHistoriesToPurgeInInterval(long beginTimestamp, long endTimestamp, TimeUnit timeUnit) {
 		try (PreparedStatement preparedStatement = getStatement("fileversion.select.all.getPurgeVersionsByInterval.sql")) {
 			String timeUnitIdentifier = timeUnitSqlTimeUnitMap.get(timeUnit);
@@ -310,15 +298,6 @@ public class FileVersionSqlDao extends AbstractSqlDao {
 		try (PreparedStatement preparedStatement = getStatement("fileversion.select.all.getPurgeVersionsBeforeTime.sql")) {
 			preparedStatement.setTimestamp(1, new Timestamp(timestamp));
 			return getAllVersionsInQuery(preparedStatement);
-		}
-		catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public Map<FileHistoryId, FileVersion> getDeletedFileVersions() {
-		try (PreparedStatement preparedStatement = getStatement("fileversion.select.all.getDeletedFileVersions.sql")) {
-			return getSingleVersionInHistory(preparedStatement);
 		}
 		catch (SQLException e) {
 			throw new RuntimeException(e);

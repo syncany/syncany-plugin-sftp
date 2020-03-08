@@ -1,5 +1,5 @@
 language: java
-jdk: openjdk7
+jdk: openjdk11
 
 env:
   global:
@@ -24,7 +24,7 @@ before_install:
   - echo "org.gradle.daemon=true" > ~/.gradle/gradle.properties
 
   # Debian Packaging
-  - sudo apt-get install -y -q dh-make devscripts debhelper bash-completion
+  - sudo apt-get install -y -q dh-make devscripts debhelper bash-completion fakeroot
   - gpg --version
   - debuild --version
   - perl -v

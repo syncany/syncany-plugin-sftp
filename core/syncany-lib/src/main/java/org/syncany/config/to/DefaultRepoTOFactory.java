@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ import org.syncany.util.StringUtil.StringJoinListener;
  * MultiChunkers. The transformers are configurable, namely whether or not compression is used
  * and how it is encrypted.
  * 
- * @author Pim Otte <otte.pim@gmail.com>
+ * @author Pim Otte (otte.pim@gmail.com)
  */
 public class DefaultRepoTOFactory implements RepoTOFactory {
 	private ChunkerTO chunkerTO;

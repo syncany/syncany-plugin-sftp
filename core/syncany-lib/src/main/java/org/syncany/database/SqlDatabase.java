@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.syncany.config.Config;
@@ -57,7 +58,7 @@ import org.syncany.plugins.transfer.files.DatabaseRemoteFile;
  * @see FileHistorySqlDao
  * @see MultiChunkSqlDao
  * @see DatabaseVersionSqlDao
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class SqlDatabase {
 	protected static final Logger logger = Logger.getLogger(SqlDatabase.class.getSimpleName());
@@ -72,7 +73,11 @@ public class SqlDatabase {
 	protected DatabaseVersionSqlDao databaseVersionDao;
 
 	public SqlDatabase(Config config) {
-		this.connection = config.createDatabaseConnection();
+		this(config, false);
+	}
+
+	public SqlDatabase(Config config, boolean readOnly) {
+		this.connection = config.createDatabaseConnection(readOnly);
 		this.applicationDao = new ApplicationSqlDao(connection);
 		this.chunkDao = new ChunkSqlDao(connection);
 		this.fileContentDao = new FileContentSqlDao(connection);
@@ -80,16 +85,26 @@ public class SqlDatabase {
 		this.fileHistoryDao = new FileHistorySqlDao(connection, fileVersionDao);
 		this.multiChunkDao = new MultiChunkSqlDao(connection);
 		this.databaseVersionDao = new DatabaseVersionSqlDao(connection, chunkDao, fileContentDao, fileVersionDao, fileHistoryDao, multiChunkDao);
+
 	}
 
 	// General
 
-	public Connection getConnection() {
-		return connection; // TODO [low] Exposes internal state!
-	}
-
 	public void commit() throws SQLException {
 		connection.commit();
+	}
+
+	@Override
+	public void finalize() {
+		try {
+			if (!connection.isClosed()) {
+				connection.commit();
+				connection.close();
+			}
+		}
+		catch (SQLException e) {
+			logger.log(Level.WARNING, "Failed to close database connection. Possible resource leak.", e);
+		}
 	}
 
 	public void rollback() throws SQLException {
@@ -182,10 +197,6 @@ public class SqlDatabase {
 		return databaseVersionDao.writeDatabaseVersion(databaseVersion);
 	}
 
-	public void writeDatabaseVersionHeader(DatabaseVersionHeader databaseVersionHeader) throws SQLException {
-		databaseVersionDao.writeDatabaseVersionHeader(databaseVersionHeader);
-	}
-
 	public void markDatabaseVersionDirty(VectorClock vectorClock) {
 		databaseVersionDao.markDatabaseVersionDirty(vectorClock);
 	}
@@ -216,6 +227,14 @@ public class SqlDatabase {
 
 	public List<PartialFileHistory> getFileHistoriesWithLastVersion() {
 		return fileHistoryDao.getFileHistoriesWithLastVersion();
+	}
+
+	public Collection<PartialFileHistory> getFileHistoriesWithLastVersionByChecksumSizeAndModifiedDate(String checksum, long size, Date modifiedDate) {
+		return fileHistoryDao.getFileHistoriesByChecksumSizeAndModifiedDate(checksum, size, modifiedDate);
+	}
+
+	public PartialFileHistory getFileHistoriesWithLastVersionByPath(String path) {
+		return fileHistoryDao.getFileHistoryWithLastVersionByPath(path);
 	}
 
 	private void removeUnreferencedFileHistories() throws SQLException {
@@ -250,20 +269,12 @@ public class SqlDatabase {
 		return fileVersionDao.getFileHistory(fileHistoryId);
 	}
 
-	public Map<FileHistoryId, FileVersion> getFileHistoriesWithMaxPurgeVersion(int keepVersionsCount) {
-		return fileVersionDao.getFileHistoriesWithMaxPurgeVersion(keepVersionsCount);
-	}
-
 	public Map<FileHistoryId, List<FileVersion>> getFileHistoriesToPurgeInInterval(long beginTimestamp, long endTimestamp, TimeUnit timeUnit) {
 		return fileVersionDao.getFileHistoriesToPurgeInInterval(beginTimestamp, endTimestamp, timeUnit);
 	}
 
 	public Map<FileHistoryId, List<FileVersion>> getFileHistoriesToPurgeBefore(long timestamp) {
 		return fileVersionDao.getFileHistoriesToPurgeBefore(timestamp);
-	}
-
-	public Map<FileHistoryId, FileVersion> getDeletedFileVersions() {
-		return fileVersionDao.getDeletedFileVersions();
 	}
 
 	public Map<FileHistoryId, FileVersion> getDeletedFileVersionsBefore(long timestamp) {
@@ -300,16 +311,8 @@ public class SqlDatabase {
 		multiChunkDao.removeUnreferencedMultiChunks();
 	}
 
-	public Map<MultiChunkId, MultiChunkEntry> getMultiChunks() {
-		return multiChunkDao.getMultiChunks();
-	}
-
 	public void writeMuddyMultiChunks(Map<DatabaseVersionHeader, Collection<MultiChunkEntry>> muddyMultiChunks) throws SQLException {
 		multiChunkDao.writeMuddyMultiChunks(muddyMultiChunks);
-	}
-
-	public Map<MultiChunkId, MultiChunkEntry> getMuddyMultiChunks() {
-		return multiChunkDao.getMuddyMultiChunks();
 	}
 
 	public void removeNonMuddyMultiChunks() throws SQLException {

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,16 +24,16 @@ import java.lang.annotation.Target;
 
 /**
  * <p>Some storage backends do not guarantee that a file immediately exists on the
- * remote side after it is uploaded or moved.<br/>
+ * remote side after it is uploaded or moved.<br>
  * This feature handles such cases by relaxing the strong assumption that a file
  * is immediately available after creation due to upload or move operations.
  *
  * <p>The {@link ReadAfterWriteConsistentFeatureTransferManager} throttles existence check
- * using a simple exponential method:<br/>
+ * using a simple exponential method:<br>
  *
- * <code>throttle(n) = 3 ^ n * 100 ms, with n being the current iteration
+ * <code>throttle(n) = 3 ^ n * 100 ms</code>, with n being the current iteration
  *
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Christian Roth (christian.roth@port17.de)
  */
 @Feature(required = false)
 @Target(ElementType.TYPE)

@@ -19,6 +19,7 @@ package org.syncany.plugins.sftp;
 
 import java.io.File;
 
+import com.google.common.base.MoreObjects;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Validate;
 import org.syncany.plugins.transfer.Encrypted;
@@ -26,7 +27,6 @@ import org.syncany.plugins.transfer.FileType;
 import org.syncany.plugins.transfer.Setup;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferSettings;
-import com.google.common.base.Objects;
 
 /**
  * The SFTP connection represents the settings required to connect to an
@@ -61,6 +61,10 @@ public class SftpTransferSettings extends TransferSettings {
 	@Element(name = "port", required = false)
 	@Setup(order = 6, description = "Port")
 	private int port = 22;
+
+	@Element(name = "checkHostKey", required = false)
+	@Setup(order = 7, description = "Whether to check the server key against known hosts (if not set, then prompt the user whether to add the key if it does not match)")
+	private Boolean checkHostKey = null;
 
 	public String getHostname() {
 		return hostname;
@@ -110,6 +114,18 @@ public class SftpTransferSettings extends TransferSettings {
 		this.privateKey = privateKey;
 	}
 
+	public Boolean getCheckHostKey() {
+		return checkHostKey;
+	}
+
+	public String getCheckHostKeyAsString() {
+		return checkHostKey == null ? "ask" : (checkHostKey ? "yes" : "no");
+	}
+
+	public void setCheckHostKey(Boolean checkHostKey) {
+		this.checkHostKey = checkHostKey;
+	}
+
 	@Validate
 	public void checkIfKeyfileExists() throws StorageException {
 		if (privateKey != null) {
@@ -128,7 +144,7 @@ public class SftpTransferSettings extends TransferSettings {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return MoreObjects.toStringHelper(this)
 						.add("hostname", hostname)
 						.add("port", port)
 						.add("username", username)

@@ -44,7 +44,8 @@ import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
 import org.syncany.plugins.transfer.files.RemoteFile;
-import org.syncany.tests.unit.util.TestFileUtil;
+import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
+import org.syncany.tests.util.TestFileUtil;
 
 public class SftpConnectionPluginTest {
 	private static File tempLocalSourceDir;
@@ -57,6 +58,9 @@ public class SftpConnectionPluginTest {
 			EmbeddedSftpServerTest.startServer();
 		}
 		catch (IOException e) {
+			e.printStackTrace();
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -85,6 +89,7 @@ public class SftpConnectionPluginTest {
 		validSftpTransferSettings.setPassword("pass");
 		validSftpTransferSettings.setPort(EmbeddedSftpServerTest.PORT);
 		validSftpTransferSettings.setPath("/repo");		
+		validSftpTransferSettings.setCheckHostKey(false);
 	}
 	
 	@After
@@ -117,6 +122,7 @@ public class SftpConnectionPluginTest {
 		connection.setPassword("pass");
 		connection.setPort(EmbeddedSftpServerTest.PORT);
 		connection.setPath("/path/does/not/exist");
+		connection.setCheckHostKey(false);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
@@ -144,6 +150,7 @@ public class SftpConnectionPluginTest {
 		// Create connection, upload, list, download
 		TransferManager transferManager = loadPluginAndCreateTransferManager();		
 		transferManager.connect();	
+		transferManager.init(true);
 
 		Map<File, RemoteFile> uploadedFiles = uploadChunkFiles(transferManager, inputFiles.values());
 		Map<String, RemoteFile> remoteFiles = transferManager.list(RemoteFile.class);

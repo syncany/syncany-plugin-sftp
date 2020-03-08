@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,19 +43,6 @@ public class NormalizedPath {
 	public NormalizedPath(File root, String normalizedPath) {
 		this.root = root;
 		this.normalizedPath = normalizedPath;
-	}		
-	
-	public static NormalizedPath get(File root, String relativePath) {
-		return get(root, relativePath, EnvironmentUtil.getOperatingSystem());
-	}
-	
-	public static NormalizedPath get(File root, String relativePath, OperatingSystem operatingSystem) {
-		if (operatingSystem == OperatingSystem.WINDOWS) {
-			return new NormalizedPath(root, relativePath.replaceAll("\\\\$",  "").replaceAll("\\\\", "/"));
-		}
-		else {
-			return new NormalizedPath(root, relativePath.replaceAll("/$", ""));
-		}
 	}
 	
 	@Override

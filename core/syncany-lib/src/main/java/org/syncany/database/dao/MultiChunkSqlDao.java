@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,10 +40,10 @@ import org.syncany.database.VectorClock;
 
 /**
  * The multi-chunk data access object (DAO) queries and modifies the <i>multichunk</i> and
- * <i>multichunk_chunk</t> table in the SQL database. These tables correspond to the Java
+ * <i>multichunk_chunk</i> table in the SQL database. These tables correspond to the Java
  * object {@link MultiChunk}.
  * 
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class MultiChunkSqlDao extends AbstractSqlDao {
 	public MultiChunkSqlDao(Connection connection) {
@@ -255,28 +255,6 @@ public class MultiChunkSqlDao extends AbstractSqlDao {
 	
 	public Map<MultiChunkId, MultiChunkEntry> getUnusedMultiChunks() {
 		try (PreparedStatement preparedStatement = getStatement("multichunk.select.all.getUnusedMultiChunks.sql")) {
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				return createMultiChunkEntriesWithoutChunks(resultSet);
-			}
-		}
-		catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public Map<MultiChunkId, MultiChunkEntry> getMultiChunks() {
-		try (PreparedStatement preparedStatement = getStatement("multichunk.select.all.getMultiChunks.sql")) {
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				return createMultiChunkEntriesWithoutChunks(resultSet);
-			}
-		}
-		catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	public Map<MultiChunkId, MultiChunkEntry> getMuddyMultiChunks() {
-		try (PreparedStatement preparedStatement = getStatement("multichunk.select.muddy.getMuddyMultiChunks.sql")) {
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				return createMultiChunkEntriesWithoutChunks(resultSet);
 			}

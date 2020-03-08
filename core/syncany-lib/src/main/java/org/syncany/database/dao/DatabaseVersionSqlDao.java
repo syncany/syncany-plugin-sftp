@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ import org.syncany.operations.down.DatabaseBranch;
  * @see FileVersionSqlDao
  * @see FileHistorySqlDao
  * @see MultiChunkSqlDao
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class DatabaseVersionSqlDao extends AbstractSqlDao {
 	protected static final Logger logger = Logger.getLogger(DatabaseVersionSqlDao.class.getSimpleName());
@@ -117,26 +117,6 @@ public class DatabaseVersionSqlDao extends AbstractSqlDao {
 
 			throw new RuntimeException("Cannot persist database.", e);
 		}
-	}
-
-	/**
-	 * Writes the given {@link DatabaseVersionHeader} to the database, including the
-	 * contained {@link VectorClock}. Be aware that the method writes the header independent
-	 * of whether or not a corresponding database version actually exists.
-	 * 
-	 * <p>This method can be used to add empty database versions to the database. Current use
-	 * case is adding an empty purge database version to the database.
-	 * 
-	 * <p><b>Note:</b> This method executes, but <b>does not commit</b> the query.
-	 * 
-	 * @param databaseVersionHeader The database version header to write to the database
-	 * @return Returns the SQL-internal primary key of the new database version
-	 */
-	public long writeDatabaseVersionHeader(DatabaseVersionHeader databaseVersionHeader) throws SQLException {
-		long databaseVersionId = writeDatabaseVersionHeaderInternal(connection, databaseVersionHeader);
-		writeVectorClock(connection, databaseVersionId, databaseVersionHeader.getVectorClock());
-
-		return databaseVersionId;
 	}
 
 	private long writeDatabaseVersion(Connection connection, DatabaseVersion databaseVersion) throws SQLException {
@@ -271,7 +251,7 @@ public class DatabaseVersionSqlDao extends AbstractSqlDao {
 	public List<DatabaseVersionHeader> getNonEmptyDatabaseVersionHeaders() {
 		List<DatabaseVersionHeader> databaseVersionHeaders = new ArrayList<>();
 
-		try (PreparedStatement preparedStatement = getStatement("databaseversion.select.master.getNonEmptyDatabaseVersionHeaders.sql")) {
+		try (PreparedStatement preparedStatement = getStatement("databaseversion.select.all.getNonEmptyDatabaseVersionHeaders.sql")) {
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
 					DatabaseVersionHeader databaseVersionHeader = createDatabaseVersionHeaderFromRow(resultSet);

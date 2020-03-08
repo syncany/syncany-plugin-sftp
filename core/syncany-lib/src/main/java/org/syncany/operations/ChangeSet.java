@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com> 
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com> 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import org.simpleframework.xml.ElementList;
  * <p>It contains several lists, indicating new, changed, deleted and unchanged files.
  * File paths are stored relative to the root Syncany directory.
  * 
- * @author Philipp C. Heckel <philipp.heckel@gmail.com>
+ * @author Philipp C. Heckel (philipp.heckel@gmail.com)
  */
 public class ChangeSet {
 	@ElementList(name = "changedFiles", entry = "file", required = false)
@@ -52,7 +52,7 @@ public class ChangeSet {
 	}
 	
 	/**
-	 * Returns <tt>true</tt> if files have been added, changed or
+	 * Returns <code>true</code> if files have been added, changed or
 	 * deleted by checking the size of {@link #getNewFiles()}, {@link #getChangedFiles()}
 	 * and {@link #getDeletedFiles()}.
 	 */

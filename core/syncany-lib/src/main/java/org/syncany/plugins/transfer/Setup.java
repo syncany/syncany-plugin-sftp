@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@ import java.lang.annotation.Target;
  * The {@link org.syncany.plugins.transfer.Setup} annotation alters the initialization process.
  *
  * @see org.syncany.plugins.transfer.TransferPluginOptions
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Christian Roth (christian.roth@port17.de)
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Setup {
 	/**
-	 * A setting's position in the initialization process (lower comes first).<br/>
+	 * A setting's position in the initialization process (lower comes first).<br>
 	 * The order cannot be assured if two fields have the same order position.
 	 */
 	int order() default -1;

@@ -1,6 +1,6 @@
 /*
  * Syncany, www.syncany.org
- * Copyright (C) 2011-2015 Philipp C. Heckel <philipp.heckel@gmail.com>
+ * Copyright (C) 2011-2016 Philipp C. Heckel <philipp.heckel@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import com.google.common.base.CaseFormat;
  * the required transfer plugin classes -- namely {@link TransferSettings},
  * {@link TransferManager} and {@link TransferPlugin}.
  *
- * @author Christian Roth <christian.roth@port17.de>
+ * @author Christian Roth (christian.roth@port17.de)
  */
 public abstract class TransferPluginUtil {
 	private static final String PLUGIN_PACKAGE_NAME_REGEX = "^" + Plugin.class.getPackage().getName().replace(".", "\\.") + "\\.([a-z0-9_]+)$";
