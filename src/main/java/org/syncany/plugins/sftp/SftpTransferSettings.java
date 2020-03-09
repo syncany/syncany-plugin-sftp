@@ -62,9 +62,8 @@ public class SftpTransferSettings extends TransferSettings {
 	@Setup(order = 6, description = "Port")
 	private int port = 22;
 
+	// No need to expose this as a field to the user (only tests would want NO)
 	public enum CheckHostKeyMode { ASK, YES, NO }
-	@Element(name = "checkHostKey", required = false)
-	@Setup(order = 7, description = "Whether to check the server key against known hosts")
 	private CheckHostKeyMode checkHostKey = CheckHostKeyMode.ASK;
 
 	public String getHostname() {
