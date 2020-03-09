@@ -51,7 +51,8 @@ public class SftpConnectionPluginTest {
 	private static File tempLocalSourceDir;
 	
 	private SftpTransferSettings validSftpTransferSettings;
-	
+	private SftpTransferSettings invalidSftpTransferSettings;
+
 	@BeforeClass
 	public static void beforeTestSetup() {
 		try {
@@ -90,6 +91,8 @@ public class SftpConnectionPluginTest {
 		validSftpTransferSettings.setPort(EmbeddedSftpServerTest.PORT);
 		validSftpTransferSettings.setPath("/repo");		
 		validSftpTransferSettings.setCheckHostKey(false);
+
+		invalidSftpTransferSettings = pluginInfo.createEmptySettings();
 	}
 	
 	@After
@@ -135,8 +138,8 @@ public class SftpConnectionPluginTest {
 	public void testConnectWithInvalidSettings() throws StorageException {
 		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
 		
-		SftpTransferSettings connection = pluginInfo.createEmptySettings();		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
+		TransferManager transferManager =
+			pluginInfo.createTransferManager(invalidSftpTransferSettings, null);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();		
