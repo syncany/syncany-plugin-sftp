@@ -93,7 +93,7 @@ public class SftpConnectionPluginTest {
 		validSftpTransferSettings.setPassword("pass");
 		validSftpTransferSettings.setPort(EmbeddedSftpServerTest.PORT);
 		validSftpTransferSettings.setPath("/repo");		
-		validSftpTransferSettings.setCheckHostKey(false);
+		validSftpTransferSettings.setCheckHostKey(SftpTransferSettings.CheckHostKeyMode.NO);
 
 		invalidSftpTransferSettings = pluginInfo.createEmptySettings();
 	}
@@ -128,7 +128,7 @@ public class SftpConnectionPluginTest {
 		connection.setPassword("pass");
 		connection.setPort(EmbeddedSftpServerTest.PORT);
 		connection.setPath("/path/does/not/exist");
-		connection.setCheckHostKey(false);
+		validSftpTransferSettings.setCheckHostKey(SftpTransferSettings.CheckHostKeyMode.NO);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
