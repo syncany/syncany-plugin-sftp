@@ -107,7 +107,7 @@ public class SftpConnectionPluginTest {
 		Plugin pluginInfo = Plugins.get("sftp");
 		
 		assertNotNull("PluginInfo should not be null.", pluginInfo);
-		assertEquals("Plugin ID should be 'ssh'.", "sftp", pluginInfo.getId());
+		assertEquals("Plugin ID should be 'sftp'.", "sftp", pluginInfo.getId());
 		assertNotNull("Plugin version should not be null.", pluginInfo.getVersion());
 		assertNotNull("Plugin name should not be null.", pluginInfo.getName());
 	}
