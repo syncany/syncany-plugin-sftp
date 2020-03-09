@@ -43,6 +43,9 @@ import org.syncany.plugins.sftp.SftpTransferSettings;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
+import org.syncany.plugins.transfer.TransferPluginOption;
+import org.syncany.plugins.transfer.TransferPluginOption.ValidationResult;
+import org.syncany.plugins.transfer.TransferPluginOptions;
 import org.syncany.plugins.transfer.files.RemoteFile;
 import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
 import org.syncany.tests.util.TestFileUtil;
@@ -132,6 +135,37 @@ public class SftpConnectionPluginTest {
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();	
 		transferManager.init(true);
+	}
+
+	@Test
+	public void testTransferSettingsFields() throws StorageException {
+		// Checks the fields types and annotations to catch runtime errors
+
+		SftpTransferSettings settings = validSftpTransferSettings;
+
+		List<TransferPluginOption> pluginOptions =
+				TransferPluginOptions.getOrderedOptions(settings.getClass());
+
+		for (TransferPluginOption option : pluginOptions) {
+			String fieldName = option.getName();
+			String fieldValue = settings.getField(fieldName);
+			ValidationResult validationRes = option.isValid(fieldValue);
+			assertEquals("Value '" + fieldValue +  "' of field '" + fieldName +
+					"' must pass validity check",
+					ValidationResult.VALID, validationRes);
+		}
+	}
+
+	@Test(expected=StorageException.class)
+	public void testInvalidSettingsValidation() throws StorageException {
+		assertFalse(invalidSftpTransferSettings.isValid());
+		invalidSftpTransferSettings.validateRequiredFields();
+	}
+
+	@Test
+	public void testValidSettingsValidation() throws StorageException {
+		assertTrue(validSftpTransferSettings.isValid());
+		validSftpTransferSettings.validateRequiredFields();
 	}
 	
 	@Test(expected=StorageException.class)
