@@ -62,9 +62,9 @@ public class SftpTransferSettings extends TransferSettings {
 	@Setup(order = 6, description = "Port")
 	private int port = 22;
 
-	@Element(name = "checkHostKey", required = false)
-	@Setup(order = 7, description = "Whether to check the server key against known hosts (if not set, then prompt the user whether to add the key if it does not match)")
-	private Boolean checkHostKey = null;
+	// No need to expose this as a field to the user (only tests would want NO)
+	public enum CheckHostKeyMode { ASK, YES, NO }
+	private CheckHostKeyMode checkHostKey = CheckHostKeyMode.ASK;
 
 	public String getHostname() {
 		return hostname;
@@ -114,15 +114,16 @@ public class SftpTransferSettings extends TransferSettings {
 		this.privateKey = privateKey;
 	}
 
-	public Boolean getCheckHostKey() {
+	public CheckHostKeyMode getCheckHostKey() {
 		return checkHostKey;
 	}
 
 	public String getCheckHostKeyAsString() {
-		return checkHostKey == null ? "ask" : (checkHostKey ? "yes" : "no");
+		return checkHostKey == CheckHostKeyMode.ASK ? "ask" :
+			(checkHostKey == CheckHostKeyMode.YES ? "yes" : "no");
 	}
 
-	public void setCheckHostKey(Boolean checkHostKey) {
+	public void setCheckHostKey(CheckHostKeyMode checkHostKey) {
 		this.checkHostKey = checkHostKey;
 	}
 

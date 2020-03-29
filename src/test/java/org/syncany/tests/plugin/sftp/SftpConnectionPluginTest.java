@@ -43,6 +43,9 @@ import org.syncany.plugins.sftp.SftpTransferSettings;
 import org.syncany.plugins.transfer.StorageException;
 import org.syncany.plugins.transfer.TransferManager;
 import org.syncany.plugins.transfer.TransferPlugin;
+import org.syncany.plugins.transfer.TransferPluginOption;
+import org.syncany.plugins.transfer.TransferPluginOption.ValidationResult;
+import org.syncany.plugins.transfer.TransferPluginOptions;
 import org.syncany.plugins.transfer.files.RemoteFile;
 import org.syncany.plugins.transfer.files.MultichunkRemoteFile;
 import org.syncany.tests.util.TestFileUtil;
@@ -51,7 +54,8 @@ public class SftpConnectionPluginTest {
 	private static File tempLocalSourceDir;
 	
 	private SftpTransferSettings validSftpTransferSettings;
-	
+	private SftpTransferSettings invalidSftpTransferSettings;
+
 	@BeforeClass
 	public static void beforeTestSetup() {
 		try {
@@ -89,7 +93,9 @@ public class SftpConnectionPluginTest {
 		validSftpTransferSettings.setPassword("pass");
 		validSftpTransferSettings.setPort(EmbeddedSftpServerTest.PORT);
 		validSftpTransferSettings.setPath("/repo");		
-		validSftpTransferSettings.setCheckHostKey(false);
+		validSftpTransferSettings.setCheckHostKey(SftpTransferSettings.CheckHostKeyMode.NO);
+
+		invalidSftpTransferSettings = pluginInfo.createEmptySettings();
 	}
 	
 	@After
@@ -107,7 +113,7 @@ public class SftpConnectionPluginTest {
 		Plugin pluginInfo = Plugins.get("sftp");
 		
 		assertNotNull("PluginInfo should not be null.", pluginInfo);
-		assertEquals("Plugin ID should be 'ssh'.", "sftp", pluginInfo.getId());
+		assertEquals("Plugin ID should be 'sftp'.", "sftp", pluginInfo.getId());
 		assertNotNull("Plugin version should not be null.", pluginInfo.getVersion());
 		assertNotNull("Plugin name should not be null.", pluginInfo.getName());
 	}
@@ -122,7 +128,7 @@ public class SftpConnectionPluginTest {
 		connection.setPassword("pass");
 		connection.setPort(EmbeddedSftpServerTest.PORT);
 		connection.setPath("/path/does/not/exist");
-		connection.setCheckHostKey(false);
+		validSftpTransferSettings.setCheckHostKey(SftpTransferSettings.CheckHostKeyMode.NO);
 		
 		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
 		
@@ -130,13 +136,44 @@ public class SftpConnectionPluginTest {
 		transferManager.connect();	
 		transferManager.init(true);
 	}
+
+	@Test
+	public void testTransferSettingsFields() throws StorageException {
+		// Checks the fields types and annotations to catch runtime errors
+
+		SftpTransferSettings settings = validSftpTransferSettings;
+
+		List<TransferPluginOption> pluginOptions =
+				TransferPluginOptions.getOrderedOptions(settings.getClass());
+
+		for (TransferPluginOption option : pluginOptions) {
+			String fieldName = option.getName();
+			String fieldValue = settings.getField(fieldName);
+			ValidationResult validationRes = option.isValid(fieldValue);
+			assertEquals("Value '" + fieldValue +  "' of field '" + fieldName +
+					"' must pass validity check",
+					ValidationResult.VALID, validationRes);
+		}
+	}
+
+	@Test(expected=StorageException.class)
+	public void testInvalidSettingsValidation() throws StorageException {
+		assertFalse(invalidSftpTransferSettings.isValid());
+		invalidSftpTransferSettings.validateRequiredFields();
+	}
+
+	@Test
+	public void testValidSettingsValidation() throws StorageException {
+		assertTrue(validSftpTransferSettings.isValid());
+		validSftpTransferSettings.validateRequiredFields();
+	}
 	
 	@Test(expected=StorageException.class)
 	public void testConnectWithInvalidSettings() throws StorageException {
 		TransferPlugin pluginInfo = Plugins.get("sftp", TransferPlugin.class);
 		
-		SftpTransferSettings connection = pluginInfo.createEmptySettings();		
-		TransferManager transferManager = pluginInfo.createTransferManager(connection, null);
+		TransferManager transferManager =
+			pluginInfo.createTransferManager(invalidSftpTransferSettings, null);
 		
 		// This should cause a Storage exception, because the path does not exist
 		transferManager.connect();		
